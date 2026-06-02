@@ -3,9 +3,13 @@
 import math
 import datetime as dt
 
+import geopandas as gpd
 import numpy as np
 from pyproj import Transformer
+from rasterio.features import shapes as rio_shapes, rasterize as rio_rasterize
+from rasterio.transform import from_bounds
 from scipy.ndimage import label as cc_label
+from shapely.geometry import shape as sg_shape
 
 from src.shadow.solar import sun_position, _tile_center
 
@@ -20,6 +24,14 @@ def _pixel_size_m(bbox: dict, shape: tuple[int, int]) -> float:
     west_m, south_m = _to_utm.transform(bbox["west"], bbox["south"])
     east_m, north_m = _to_utm.transform(bbox["east"], bbox["north"])
     return ((east_m - west_m) / W + (north_m - south_m) / H) / 2.0
+
+
+def _bbox_to_transform(bbox: dict, shape: tuple[int, int]):
+    """Return rasterio Affine mapping pixel space → EPSG:25832 for the tile."""
+    H, W = shape
+    west_m, south_m = _to_utm.transform(bbox["west"], bbox["south"])
+    east_m, north_m = _to_utm.transform(bbox["east"], bbox["north"])
+    return from_bounds(west_m, south_m, east_m, north_m, W, H)
 
 
 def _shift_mask(mask: np.ndarray, dr: int, dc: int) -> np.ndarray:
@@ -80,6 +92,56 @@ def estimate_tree_heights(
     return labeled, heights
 
 
+def vectorize_trees(
+    tree_mask: np.ndarray,
+    bbox: dict,
+    vegetation_model: str,
+    min_component_pixels: int = 50,
+) -> gpd.GeoDataFrame:
+    """Convert a tree mask to georeferenced polygon features in EPSG:25832.
+
+    Runs connected-component labeling and the allometric height formula,
+    then traces each component into a Shapely polygon via rasterio.features.shapes().
+
+    Returns a GeoDataFrame with columns:
+      tree_id (int), geometry (Polygon), height_m, crown_radius_m,
+      crown_area_m2 (float), vegetation_model (str).
+    """
+    H, W = tree_mask.shape
+    pixel_size_m = _pixel_size_m(bbox, (H, W))
+    transform = _bbox_to_transform(bbox, (H, W))
+    labeled, heights = estimate_tree_heights(tree_mask, pixel_size_m, min_component_pixels)
+
+    records = []
+    for k, height_m in heights.items():
+        component = (labeled == k).astype(np.uint8)
+        polys = [
+            sg_shape(geom)
+            for geom, val in rio_shapes(component, mask=component, transform=transform)
+            if val == 1
+        ]
+        if not polys:
+            continue
+        geom = max(polys, key=lambda g: g.area)
+        crown_radius_m = height_m / 1.4
+        records.append({
+            "tree_id": k,
+            "geometry": geom,
+            "height_m": height_m,
+            "crown_radius_m": crown_radius_m,
+            "crown_area_m2": math.pi * crown_radius_m ** 2,
+            "vegetation_model": vegetation_model,
+        })
+
+    if not records:
+        return gpd.GeoDataFrame(
+            columns=["tree_id", "geometry", "height_m", "crown_radius_m",
+                     "crown_area_m2", "vegetation_model"],
+            crs="EPSG:25832",
+        )
+    return gpd.GeoDataFrame(records, crs="EPSG:25832")
+
+
 def cast_tree_shadows(
     seg_map: np.ndarray,
     bbox: dict,
@@ -87,6 +149,7 @@ def cast_tree_shadows(
     min_elevation_deg: float = 5.0,
     max_shadow_factor: float = 5.0,
     min_component_pixels: int = 50,
+    tree_gdf: gpd.GeoDataFrame | None = None,
 ) -> np.ndarray:
     """Compute where tree canopies cast shadows given a sun position.
 
@@ -125,9 +188,22 @@ def cast_tree_shadows(
     elevation_rad = math.radians(elevation_deg)
     shadow_az_rad = math.radians((azimuth_deg + 180.0) % 360.0)
 
-    labeled, heights = estimate_tree_heights(
-        seg_map == 1, pixel_size_m, min_component_pixels
-    )
+    if tree_gdf is not None and len(tree_gdf) > 0:
+        transform = _bbox_to_transform(bbox, (H, W))
+        labeled = np.zeros((H, W), dtype=np.int32)
+        heights: dict[int, float] = {}
+        for row in tree_gdf.itertuples():
+            burned = rio_rasterize(
+                [(row.geometry, int(row.tree_id))],
+                out_shape=(H, W), transform=transform,
+                fill=0, dtype=np.int32,
+            )
+            labeled = np.where(burned > 0, burned, labeled)
+            heights[int(row.tree_id)] = float(row.height_m)
+    else:
+        labeled, heights = estimate_tree_heights(
+            seg_map == 1, pixel_size_m, min_component_pixels
+        )
 
     shadow_mask = np.zeros((H, W), dtype=bool)
 

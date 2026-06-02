@@ -18,6 +18,9 @@ ROAD_BUFFER = {
 DEFAULT_ROAD_BUFFER = 2.5
 
 
+HEIGHT_COLS = ["building:levels", "height", "building:height", "min_height", "roof:levels"]
+
+
 def fetch_buildings(
     bbox: dict,
     cache_path: Path | None = None,
@@ -25,7 +28,9 @@ def fetch_buildings(
 ) -> gpd.GeoDataFrame:
     """Return building polygons in EPSG:25832 for bbox (WGS84).
 
-    Loads from cache_path if it exists; downloads and saves otherwise.
+    Columns: osmid, geometry, plus any available height fields
+    (building:levels, height, building:height, min_height, roof:levels).
+    Loads from cache_path (.fgb) if it exists; downloads and saves otherwise.
     """
     if cache_path is not None and Path(cache_path).exists():
         return gpd.read_file(cache_path)
@@ -37,11 +42,17 @@ def fetch_buildings(
         tags={"building": True},
     )
     gdf = raw[raw.geometry.type.isin(["Polygon", "MultiPolygon"])].copy()
-    gdf = gdf[["geometry"]].to_crs("EPSG:25832")
+    gdf = gdf.to_crs("EPSG:25832")
+
+    keep = ["geometry"] + [c for c in HEIGHT_COLS if c in gdf.columns]
+    gdf = gdf[keep]
+    gdf.index = gdf.index.droplevel("element_type")
+    gdf.index.name = "osmid"
+    gdf = gdf.reset_index()
 
     if cache_path is not None:
         Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
-        gdf.to_file(cache_path, driver="GeoJSON")
+        gdf.to_file(cache_path, driver="FlatGeobuf")
 
     return gdf
 

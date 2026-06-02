@@ -86,6 +86,7 @@ def cmd_download(dry_run: bool = False) -> None:
 
 
 def cmd_segment(vegetation_model: str = "vari") -> None:
+    from src.shadow.casting import vectorize_trees
     seg_dir = OUTPUT_DIR / "segments"
     _, mask_fn = _load_vegetation_model(vegetation_model)
 
@@ -94,7 +95,7 @@ def cmd_segment(vegetation_model: str = "vari") -> None:
         tile_dir = OUTPUT_DIR / area_name
         print(f"\n--- {area_name}: segmenting {len(tiles)} tile(s) [{vegetation_model}] ---")
 
-        buildings = fetch_buildings(area, cache_path=OUTPUT_DIR / f"buildings_{area_name}.geojson")
+        buildings = fetch_buildings(area, cache_path=OUTPUT_DIR / f"buildings_{area_name}.fgb")
         roads = fetch_roads(area, cache_path=OUTPUT_DIR / f"roads_{area_name}.geojson")
         print(f"  OSM: {len(buildings)} buildings, {len(roads)} roads")
 
@@ -113,6 +114,10 @@ def cmd_segment(vegetation_model: str = "vari") -> None:
                 out_dir=seg_dir, stem=stem,
             )
             print(f"  {base_stem}: saved {npy_path.name}, {png_path.name}")
+            tree_gdf = vectorize_trees(tree_mask, t, vegetation_model)
+            fgb_path = seg_dir / f"{stem}_trees.fgb"
+            tree_gdf.to_file(fgb_path, driver="FlatGeobuf")
+            print(f"  {base_stem}: vectorized {len(tree_gdf)} tree(s) → {fgb_path.name}")
 
 
 def cmd_compare(area_filter: str | None = None) -> None:
@@ -175,6 +180,7 @@ def cmd_shadow(
     datetime_utc: str | None = None,
 ) -> None:
     import datetime as dt
+    import geopandas as gpd
     from src.shadow import cast_tree_shadows, save_shadow_overlay
 
     if datetime_utc is None:
@@ -183,6 +189,7 @@ def cmd_shadow(
         when = dt.datetime.fromisoformat(datetime_utc).replace(tzinfo=dt.timezone.utc)
 
     shadow_dir = OUTPUT_DIR / "shadows"
+    seg_dir = OUTPUT_DIR / "segments"
     areas = {k: v for k, v in AREAS.items() if area_filter is None or k == area_filter}
     if not areas:
         print(f"No area named {area_filter!r}. Available: {list(AREAS)}")
@@ -196,7 +203,8 @@ def cmd_shadow(
 
         for t in tiles:
             stem = f"{area_name}_tile_{t['ix']}_{t['iy']}"
-            seg_path = OUTPUT_DIR / "segments" / f"{stem}_{vegetation_model}_seg.npy"
+            seg_path = seg_dir / f"{stem}_{vegetation_model}_seg.npy"
+            fgb_path = seg_dir / f"{stem}_{vegetation_model}_trees.fgb"
             img_path = OUTPUT_DIR / area_name / f"{stem}.png"
 
             if not seg_path.exists():
@@ -209,7 +217,11 @@ def cmd_shadow(
             seg_map = np.load(seg_path)
             img = np.array(Image.open(img_path).convert("RGB"))
 
-            shadow_mask = cast_tree_shadows(seg_map, t, when)
+            tree_gdf = gpd.read_file(fgb_path) if fgb_path.exists() else None
+            if tree_gdf is not None:
+                print(f"  {stem}: using stored tree vectors ({len(tree_gdf)} trees)")
+
+            shadow_mask = cast_tree_shadows(seg_map, t, when, tree_gdf=tree_gdf)
             coverage_pct = shadow_mask.mean() * 100
 
             out_path = shadow_dir / f"{stem}_{vegetation_model}_shadow.png"

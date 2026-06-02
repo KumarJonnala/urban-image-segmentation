@@ -1,3 +1,3 @@
 from src.shadow.solar import sun_position
-from src.shadow.casting import cast_tree_shadows, estimate_tree_heights
+from src.shadow.casting import cast_tree_shadows, estimate_tree_heights, vectorize_trees
 from src.shadow.viz import save_shadow_overlay
