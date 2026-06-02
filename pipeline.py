@@ -96,7 +96,7 @@ def cmd_segment(vegetation_model: str = "vari") -> None:
         print(f"\n--- {area_name}: segmenting {len(tiles)} tile(s) [{vegetation_model}] ---")
 
         buildings = fetch_buildings(area, cache_path=OUTPUT_DIR / f"buildings_{area_name}.fgb")
-        roads = fetch_roads(area, cache_path=OUTPUT_DIR / f"roads_{area_name}.geojson")
+        roads = fetch_roads(area, cache_path=OUTPUT_DIR / f"roads_{area_name}.fgb")
         print(f"  OSM: {len(buildings)} buildings, {len(roads)} roads")
 
         for t in tiles:
@@ -232,10 +232,11 @@ def cmd_shadow(
             print(f"  {stem}: shadow={coverage_pct:.1f}%  → {out_path.name}")
 
 
-def cmd_all(dry_run: bool = False, vegetation_model: str = "vari") -> None:
+def cmd_all(dry_run: bool = False, vegetation_model: str = "vari", datetime_utc: str | None = None) -> None:
     cmd_download(dry_run=dry_run)
     if not dry_run:
         cmd_segment(vegetation_model=vegetation_model)
+        cmd_shadow(vegetation_model=vegetation_model, datetime_utc=datetime_utc)
 
 
 if __name__ == "__main__":
@@ -273,13 +274,18 @@ if __name__ == "__main__":
         help='ISO datetime in UTC, e.g. "2024-06-21T11:00:00". Defaults to now.',
     )
 
-    all_cmd = sub.add_parser("all", help="Download then segment")
+    all_cmd = sub.add_parser("all", help="Download, segment, and cast shadows")
     all_cmd.add_argument("--dry-run", action="store_true")
     all_cmd.add_argument(
         "--vegetation-model",
         choices=VEGETATION_MODELS,
         default="vari",
         help="Vegetation segmentation method (default: vari)",
+    )
+    all_cmd.add_argument(
+        "--datetime-utc",
+        default=None,
+        help='ISO datetime in UTC for shadow casting, e.g. "2024-06-21T11:00:00". Defaults to now.',
     )
 
     args = parser.parse_args()
@@ -297,6 +303,6 @@ if __name__ == "__main__":
             datetime_utc=args.datetime_utc,
         )
     elif args.command == "all":
-        cmd_all(dry_run=args.dry_run, vegetation_model=args.vegetation_model)
+        cmd_all(dry_run=args.dry_run, vegetation_model=args.vegetation_model, datetime_utc=args.datetime_utc)
     else:
         cmd_all()

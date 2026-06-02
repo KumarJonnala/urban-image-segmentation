@@ -46,7 +46,7 @@ def fetch_buildings(
 
     keep = ["geometry"] + [c for c in HEIGHT_COLS if c in gdf.columns]
     gdf = gdf[keep]
-    gdf.index = gdf.index.droplevel("element_type")
+    gdf.index = gdf.index.droplevel("element")
     gdf.index.name = "osmid"
     gdf = gdf.reset_index()
 
@@ -83,12 +83,13 @@ def fetch_roads(
     gdf = gdf.to_crs("EPSG:25832")
 
     hw = gdf.get("highway", "").astype(str)
+    gdf["highway"] = hw
     gdf["buffer_m"] = hw.map(lambda h: buf.get(h, default_buffer))
     gdf["geometry"] = gdf.geometry.buffer(gdf["buffer_m"])
-    gdf = gdf[["geometry"]]
+    gdf = gdf[["geometry", "highway", "buffer_m"]]
 
     if cache_path is not None:
         Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
-        gdf.to_file(cache_path, driver="GeoJSON")
+        gdf.to_file(cache_path, driver="FlatGeobuf")
 
     return gdf
