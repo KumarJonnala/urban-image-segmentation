@@ -55,7 +55,7 @@ def save_segmentation(
 ) -> tuple[Path, Path]:
     """Rasterize all layers, compose a multi-class array, and save outputs.
 
-    Priority stacking: building (3) > road (2) > tree (1) > other (0).
+    Priority stacking: tree (1) > road (2) > building (3) > other (0).
 
     Parameters
     ----------
@@ -81,9 +81,9 @@ def save_segmentation(
     road_mask = rasterize_layer(road_gdf, out_shape, transform)
 
     seg = np.zeros(out_shape, dtype=np.uint8)
-    seg[tree_mask] = 1
-    seg[road_mask] = 2
     seg[building_mask] = 3
+    seg[road_mask] = 2
+    seg[tree_mask] = 1
 
     npy_path = out_dir / f"{stem}_seg.npy"
     np.save(npy_path, seg)
