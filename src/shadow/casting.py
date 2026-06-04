@@ -51,13 +51,18 @@ def estimate_tree_heights(
     tree_mask: np.ndarray,
     pixel_size_m: float,
     min_component_pixels: int = 50,
+    max_crown_radius_m: float = 8.0,
 ) -> tuple[np.ndarray, dict[int, float]]:
     """Estimate per-tree-cluster height from canopy area using an allometric formula.
 
-    For each connected component of the tree mask:
+    For each connected component:
         crown_area_m² = n_pixels × pixel_size_m²
         crown_radius_m = sqrt(area / π)
         tree_height_m  = crown_diameter × 0.7   (allometric: Hn ≈ 0.7 × 2r)
+
+    Components whose equivalent crown radius exceeds max_crown_radius_m are split
+    via watershed before height estimation, preventing the sqrt(N) height inflation
+    that occurs when N merged trees are treated as one giant tree.
 
     Parameters
     ----------
@@ -67,27 +72,70 @@ def estimate_tree_heights(
         Metres per pixel (derived from tile bbox and image dimensions).
     min_component_pixels : int
         Components smaller than this are skipped (noise).
+    max_crown_radius_m : float
+        Single-tree radius threshold. Larger components are watershed-split.
+        Default 8 m ≈ 200 m² crown area.
 
     Returns
     -------
     labeled : np.ndarray
-        Integer (H, W) array of component labels (same as scipy.ndimage.label output).
+        Integer (H, W) array of component labels.
     heights : dict[int, float]
-        Mapping of label → estimated tree_height_m. Labels not present were
-        below min_component_pixels.
+        Mapping of label → estimated tree_height_m.
     """
+    from scipy.ndimage import distance_transform_edt
+    from skimage.feature import peak_local_max
+    from skimage.segmentation import watershed
+
     labeled, n = cc_label(tree_mask, structure=_8CONN)
+    labeled = labeled.astype(np.int32)
     heights: dict[int, float] = {}
     px_area = pixel_size_m ** 2
+    next_label = int(labeled.max()) + 1
+    min_dist_px = max(1, int(max_crown_radius_m * 0.5 / pixel_size_m))
 
     for k in range(1, n + 1):
-        n_pixels = int((labeled == k).sum())
+        comp_mask = labeled == k
+        n_pixels = int(comp_mask.sum())
         if n_pixels < min_component_pixels:
             continue
+
         crown_area_m2 = n_pixels * px_area
         crown_radius_m = math.sqrt(crown_area_m2 / math.pi)
-        tree_height_m = 2.0 * crown_radius_m * 0.7
-        heights[k] = tree_height_m
+
+        if crown_radius_m <= max_crown_radius_m:
+            heights[k] = 2.0 * crown_radius_m * 0.7
+            continue
+
+        # Large cluster: watershed to recover individual crowns
+        dist = distance_transform_edt(comp_mask)
+        coords = peak_local_max(dist, min_distance=min_dist_px, labels=comp_mask.astype(np.int32))
+
+        if len(coords) <= 1:
+            # Only one peak — cap the radius rather than split
+            heights[k] = 2.0 * min(crown_radius_m, max_crown_radius_m) * 0.7
+            continue
+
+        peaks_mask = np.zeros(dist.shape, dtype=bool)
+        peaks_mask[tuple(coords.T)] = True
+        markers, _ = cc_label(peaks_mask)
+        split = watershed(-dist, markers, mask=comp_mask)
+
+        for sub_val in np.unique(split[comp_mask]):
+            if sub_val == 0:
+                continue
+            sub_mask = split == sub_val
+            sub_pixels = int(sub_mask.sum())
+            if sub_pixels < min_component_pixels:
+                labeled[sub_mask] = 0
+                continue
+            sub_radius_m = min(math.sqrt(sub_pixels * px_area / math.pi), max_crown_radius_m)
+            labeled[sub_mask] = next_label
+            heights[next_label] = 2.0 * sub_radius_m * 0.7
+            next_label += 1
+
+        # Zero pixels still carrying original label k (small watershed regions)
+        labeled[comp_mask & (labeled == k)] = 0
 
     return labeled, heights
 
@@ -97,6 +145,7 @@ def vectorize_trees(
     bbox: dict,
     vegetation_model: str,
     min_component_pixels: int = 50,
+    max_crown_radius_m: float = 8.0,
 ) -> gpd.GeoDataFrame:
     """Convert a tree mask to georeferenced polygon features in EPSG:25832.
 
@@ -110,7 +159,7 @@ def vectorize_trees(
     H, W = tree_mask.shape
     pixel_size_m = _pixel_size_m(bbox, (H, W))
     transform = _bbox_to_transform(bbox, (H, W))
-    labeled, heights = estimate_tree_heights(tree_mask, pixel_size_m, min_component_pixels)
+    labeled, heights = estimate_tree_heights(tree_mask, pixel_size_m, min_component_pixels, max_crown_radius_m)
 
     records = []
     for k, height_m in heights.items():
@@ -142,6 +191,40 @@ def vectorize_trees(
     return gpd.GeoDataFrame(records, crs="EPSG:25832")
 
 
+def vectorize_shadows(
+    shadow_mask: np.ndarray,
+    bbox: dict,
+    dt_utc: dt.datetime,
+    vegetation_model: str,
+) -> gpd.GeoDataFrame:
+    """Convert a boolean shadow mask to georeferenced polygon features in EPSG:25832.
+
+    Returns a GeoDataFrame with columns:
+      geometry (Polygon), datetime_utc (str), vegetation_model (str), area_m2 (float).
+    """
+    H, W = shadow_mask.shape
+    transform = _bbox_to_transform(bbox, (H, W))
+    mask_u8 = shadow_mask.astype(np.uint8)
+
+    records = []
+    for geom, val in rio_shapes(mask_u8, mask=mask_u8, transform=transform):
+        if val == 1:
+            poly = sg_shape(geom)
+            records.append({
+                "geometry": poly,
+                "datetime_utc": dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "vegetation_model": vegetation_model,
+                "area_m2": round(poly.area, 2),
+            })
+
+    if not records:
+        return gpd.GeoDataFrame(
+            columns=["geometry", "datetime_utc", "vegetation_model", "area_m2"],
+            crs="EPSG:25832",
+        )
+    return gpd.GeoDataFrame(records, crs="EPSG:25832")
+
+
 def cast_tree_shadows(
     seg_map: np.ndarray,
     bbox: dict,
@@ -150,6 +233,7 @@ def cast_tree_shadows(
     max_shadow_factor: float = 5.0,
     min_component_pixels: int = 50,
     tree_gdf: gpd.GeoDataFrame | None = None,
+    max_crown_radius_m: float = 8.0,
 ) -> np.ndarray:
     """Compute where tree canopies cast shadows given a sun position.
 
@@ -202,10 +286,11 @@ def cast_tree_shadows(
             heights[int(row.tree_id)] = float(row.height_m)
     else:
         labeled, heights = estimate_tree_heights(
-            seg_map == 1, pixel_size_m, min_component_pixels
+            seg_map == 1, pixel_size_m, min_component_pixels, max_crown_radius_m
         )
 
     shadow_mask = np.zeros((H, W), dtype=bool)
+    building_mask = seg_map == 3
 
     for k, tree_height_m in heights.items():
         crown_radius_m = tree_height_m / 1.4  # inverse of allometric (diameter×0.7)
@@ -218,9 +303,19 @@ def cast_tree_shadows(
         dy_px = -shadow_length_m * math.cos(shadow_az_rad) / pixel_size_m
 
         comp_mask = labeled == k
-        shifted = _shift_mask(comp_mask, int(round(dy_px)), int(round(dx_px)))
-        shadow_mask |= shifted
+        dy_i = int(round(dy_px))
+        dx_i = int(round(dx_px))
+        n_steps = max(abs(dy_i), abs(dx_i), 1)
+        for step in range(n_steps + 1):
+            shifted = _shift_mask(
+                comp_mask,
+                int(round(dy_px * step / n_steps)),
+                int(round(dx_px * step / n_steps)),
+            )
+            shadow_mask |= shifted
+            if (shifted & building_mask).any():
+                break  # building occludes further shadow propagation
 
-    # Source tree pixels are not shadow — they stay green in the overlay
     shadow_mask &= ~(seg_map == 1)
+    shadow_mask &= ~building_mask
     return shadow_mask
