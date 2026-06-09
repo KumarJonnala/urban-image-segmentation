@@ -7,7 +7,9 @@ Urban satellite image segmentation and shadow modelling for shaded routing.
 ## Phases
 
 1. **Data acquisition** — DOP20 orthophotos (Sachsen-Anhalt WMS, 20 cm/px) tiled at configurable sizes (100 / 250 / 500 / 1000 m); building and road footprints from OpenStreetMap
+https://www.lvermgeo.sachsen-anhalt.de/de/gdp-geoinformationen.html
 2. **Urban segmentation** — 4-class pixel map: `other | tree | road | building` using one of 7 vegetation models (default: TCD SegFormer)
+https://huggingface.co/restor/tcd-segformer-mit-b5
 3. **Shadow modelling** — Per-tree shadow projection using solar position, allometric height estimation, and watershed crown separation
 
 ---
