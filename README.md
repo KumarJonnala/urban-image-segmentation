@@ -36,7 +36,11 @@ python pipeline.py diurnal --date-utc "2026-06-21" --tile 1_1 --tile-size 250
 python pipeline.py status --all-sizes
 
 # Benchmark all vegetation models side-by-side
-python pipeline.py compare
+python pipeline.py compare models
+
+# Cross-size segmentation agreement (pairwise IoU, precision/recall)
+python pipeline.py compare sizes
+python pipeline.py compare sizes --resolution 0.5 --reference-size 250
 
 # Tune hyperparameters for a model against a reference
 python pipeline.py tune --model vari --tile 0_0
@@ -63,7 +67,7 @@ Interactive exploration: open `test_notebooks/shadow_analysis.ipynb` in Jupyter.
 
 **Model references**
 
-- **TCD SegFormer** — SegFormer-MiT-B5 fine-tuned for tree cover delineation by Restor (restor.eco). Architecture: Xie, S. et al. (2021) — see SegFormer below. Training data and metrics: [`restor/tcd-segformer-mit-b5`](https://huggingface.co/restor/tcd-segformer-mit-b5) *(verify specific training paper from model card before citing).*
+- **TCD SegFormer** — SegFormer-MiT-B5 fine-tuned for tree cover delineation by Restor (restor.eco). Training data and metrics: [`restor/tcd-segformer-mit-b5`](https://huggingface.co/restor/tcd-segformer-mit-b5)
 - **SegFormer** — Xie, S. et al. (2021). *SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers.* NeurIPS 2021. mIoU 51.8% on ADE20K (B5). HuggingFace: [`nvidia/segformer-b5-finetuned-ade-640-640`](https://huggingface.co/nvidia/segformer-b5-finetuned-ade-640-640)
 - **SAM** — Kirillov, A. et al. (2023). *Segment Anything.* ICCV 2023. [`facebookresearch/segment-anything`](https://github.com/facebookresearch/segment-anything)
 - **SamGeo** — Wu, Q. & Osco, L. (2023). *samgeo: A Python package for segmenting geospatial data with the Segment Anything Model (SAM).* Journal of Open Source Software, 8(89), 5663. [`opengeos/segment-geospatial`](https://github.com/opengeos/segment-geospatial)
@@ -124,7 +128,7 @@ urban-shadow-analysis/
 │   │       └── ...
 │   ├── sentinel2/          # Sentinel-2 time-series GeoTIFFs
 │   └── sam_checkpoints/    # SAM ViT-B weights
-├── pipeline.py             # CLI: download / segment / compare / shadow / diurnal / status / tune / all
+├── pipeline.py             # CLI: download / segment / compare {models,sizes} / shadow / diurnal / status / tune / all
 ├── requirements.txt
 └── README.md
 ```

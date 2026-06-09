@@ -1,14 +1,15 @@
 """Pipeline entry point.
 
 Subcommands:
-  download   — fetch orthophoto tile grid + full-area overview image
-  segment    — run OSM + vegetation segmentation on downloaded tiles
-  compare    — run all vegetation methods side-by-side and print metrics
-  shadow     — cast tree shadows from segmentation maps for a given datetime
-  diurnal    — hourly shadow table + overlays for one tile across a full day
-  status     — show what has been computed per area and tile size
-  tune       — grid-search hyperparameters for a tunable model against a reference
-  all        — download + segment + shadow (default when no subcommand given)
+  download          — fetch orthophoto tile grid + full-area overview image
+  segment           — run OSM + vegetation segmentation on downloaded tiles
+  compare models    — run all vegetation methods side-by-side and print metrics
+  compare sizes     — pairwise IoU across tile sizes on a shared UTM grid
+  shadow            — cast tree shadows from segmentation maps for a given datetime
+  diurnal           — hourly shadow table + overlays for one tile across a full day
+  status            — show what has been computed per area and tile size
+  tune              — grid-search hyperparameters for a tunable model against a reference
+  all               — download + segment + shadow (default when no subcommand given)
 
 Tile size flags (available on download, segment, shadow, all):
   --tile-size M    run for a single tile size M (metres)
@@ -16,12 +17,13 @@ Tile size flags (available on download, segment, shadow, all):
   (default: TILE_SIZE_M = 250)
 
 Examples:
-  python pipeline.py                                         # download + segment + shadow @ 250m
-  python pipeline.py --all-sizes                             # full pipeline for all tile sizes
-  python pipeline.py download --dry-run --all-sizes          # preview all tile grids
-  python pipeline.py download --tile-size 500                # download 500m tiles only
+  python pipeline.py                                           # download + segment + shadow @ 250m
+  python pipeline.py --all-sizes                               # full pipeline for all tile sizes
+  python pipeline.py download --dry-run --all-sizes            # preview all tile grids
+  python pipeline.py download --tile-size 500                  # download 500m tiles only
   python pipeline.py segment --vegetation-model vari
-  python pipeline.py compare --area ovgu_bbox
+  python pipeline.py compare models --area ovgu_bbox
+  python pipeline.py compare sizes --resolution 1.0 --reference-size 250
   python pipeline.py shadow --datetime-utc "2026-06-21T09:00:00" --all-sizes
   python pipeline.py diurnal --date-utc "2026-06-21" --tile 1_1 --tile-size 250
   python pipeline.py status --all-sizes
@@ -196,6 +198,112 @@ def cmd_compare(area_filter: str | None = None) -> None:
         csv_path = seg_dir / "comparison_metrics.csv"
         combined.to_csv(csv_path, index=False)
         print(f"Metrics saved to {csv_path}")
+
+
+def cmd_compare_sizes(
+    area_filter: str | None = None,
+    vegetation_model: str = DEFAULT_VEGETATION_MODEL,
+    resolution_m: float = 1.0,
+    reference_size_m: int = 250,
+) -> None:
+    """Rasterize tree polygons from each tile size onto a shared UTM grid and compute pairwise IoU."""
+    import geopandas as gpd
+    import pandas as pd
+    from pyproj import Transformer
+    from rasterio.features import rasterize as rio_rasterize
+    from rasterio.transform import from_bounds
+
+    _to_utm = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
+    areas = {k: v for k, v in AREAS.items() if area_filter is None or k == area_filter}
+    if not areas:
+        print(f"No area named {area_filter!r}. Available: {list(AREAS)}")
+        return
+
+    for area_name, area in areas.items():
+        west_m, south_m = _to_utm.transform(area["west"], area["south"])
+        east_m, north_m = _to_utm.transform(area["east"], area["north"])
+        width = int(round((east_m - west_m) / resolution_m))
+        height = int(round((north_m - south_m) / resolution_m))
+        transform = from_bounds(west_m, south_m, east_m, north_m, width, height)
+
+        print(f"\n{area_name} — common grid {width}×{height} px @ {resolution_m:.1f} m/px  [{vegetation_model}]")
+        print(f"  {'Size':>6}  {'Trees':>7}  {'Coverage':>10}")
+        print(f"  {'-'*29}")
+
+        masks: dict[int, np.ndarray] = {}
+        tree_counts: dict[int, int] = {}
+        for size in TILE_SIZES_M:
+            seg_dir = OUTPUT_DIR / "segments" / f"{size}m"
+            fgb_files = sorted(seg_dir.glob(f"{area_name}_*_{vegetation_model}_trees.fgb")) if seg_dir.exists() else []
+            if not fgb_files:
+                print(f"  {size:>4}m  [no data — run 'segment' first]")
+                continue
+
+            gdfs = [gpd.read_file(f) for f in fgb_files]
+            gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs="EPSG:25832")
+            shapes = [(geom, 1) for geom in gdf.geometry if geom is not None and not geom.is_empty]
+
+            if shapes:
+                raster = rio_rasterize(shapes, out_shape=(height, width),
+                                       transform=transform, fill=0, dtype="uint8")
+                masks[size] = raster.astype(bool)
+            else:
+                masks[size] = np.zeros((height, width), dtype=bool)
+
+            tree_counts[size] = len(gdf)
+            print(f"  {size:>4}m  {len(gdf):>7}  {masks[size].mean()*100:>9.2f}%")
+
+        if len(masks) < 2:
+            print("  [skip] need ≥2 sizes with data to compare")
+            continue
+
+        sizes = sorted(masks)
+        col_w = 7
+
+        # Pairwise IoU table
+        print(f"\n  Pairwise IoU:")
+        print(f"  {'':>6}" + "".join(f"  {s:>{col_w}}m" for s in sizes))
+        records = []
+        for s1 in sizes:
+            row = f"  {s1:>4}m "
+            rec: dict = {"size_m": s1, "trees": tree_counts.get(s1, 0),
+                         "coverage_pct": round(float(masks[s1].mean() * 100), 3)}
+            for s2 in sizes:
+                inter = int((masks[s1] & masks[s2]).sum())
+                union = int((masks[s1] | masks[s2]).sum())
+                iou = inter / union if union > 0 else 1.0
+                row += f"  {iou:>{col_w}.3f}"
+                rec[f"iou_{s2}m"] = round(iou, 4)
+            print(row)
+            records.append(rec)
+
+        # Precision / recall vs reference size
+        ref = reference_size_m if reference_size_m in masks else max(sizes)
+        ref_mask = masks[ref]
+        print(f"\n  Precision / Recall vs {ref}m reference:")
+        print(f"  {'Size':>6}  {'Prec':>8}  {'Rec':>8}  {'F1':>8}")
+        for s in sizes:
+            if s == ref:
+                print(f"  {s:>4}m  {'(ref)':>8}")
+                continue
+            tp = int((masks[s] & ref_mask).sum())
+            fp = int((masks[s] & ~ref_mask).sum())
+            fn = int((~masks[s] & ref_mask).sum())
+            prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+            rec_val = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            f1 = 2 * prec * rec_val / (prec + rec_val) if (prec + rec_val) > 0 else 0.0
+            print(f"  {s:>4}m  {prec:>8.3f}  {rec_val:>8.3f}  {f1:>8.3f}")
+            for r in records:
+                if r["size_m"] == s:
+                    r[f"prec_vs_{ref}m"] = round(prec, 4)
+                    r[f"rec_vs_{ref}m"] = round(rec_val, 4)
+                    r[f"f1_vs_{ref}m"] = round(f1, 4)
+
+        # Save CSV
+        out_csv = OUTPUT_DIR / "segments" / f"{area_name}_{vegetation_model}_size_comparison.csv"
+        out_csv.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(records).to_csv(out_csv, index=False)
+        print(f"\n  Saved → {out_csv}")
 
 
 def cmd_shadow(
@@ -452,8 +560,34 @@ if __name__ == "__main__":
     seg.add_argument("--tile-size", type=int, default=None, metavar="M", help="Single tile size in metres")
     seg.add_argument("--all-sizes", action="store_true", help=f"Segment for all TILE_SIZES_M {TILE_SIZES_M}")
 
-    cmp = sub.add_parser("compare", help="Compare all vegetation methods side-by-side")
-    cmp.add_argument("--area", default=None, help="Limit to a single area name")
+    cmp = sub.add_parser("compare", help="compare models | compare sizes")
+    cmp_sub = cmp.add_subparsers(dest="compare_command")
+
+    cmp_models = cmp_sub.add_parser("models", help="Run all vegetation methods side-by-side")
+    cmp_models.add_argument("--area", default=None, help="Limit to a single area name")
+
+    cmp_sizes = cmp_sub.add_parser("sizes", help="Pairwise IoU across tile sizes on a shared UTM grid")
+    cmp_sizes.add_argument("--area", default=None, help="Limit to a single area name")
+    cmp_sizes.add_argument(
+        "--vegetation-model",
+        choices=VEGETATION_MODELS,
+        default=DEFAULT_VEGETATION_MODEL,
+        help=f"Which tree .fgb files to load (default: {DEFAULT_VEGETATION_MODEL})",
+    )
+    cmp_sizes.add_argument(
+        "--resolution",
+        type=float,
+        default=1.0,
+        metavar="M",
+        help="Common grid resolution in metres/px (default: 1.0)",
+    )
+    cmp_sizes.add_argument(
+        "--reference-size",
+        type=int,
+        default=250,
+        metavar="M",
+        help="Tile size used as precision/recall reference (default: 250)",
+    )
 
     shd = sub.add_parser("shadow", help="Cast tree shadows from segmentation maps")
     shd.add_argument("--area", default=None, help="Limit to a single area name")
@@ -538,7 +672,17 @@ if __name__ == "__main__":
     elif args.command == "segment":
         cmd_segment(vegetation_model=args.vegetation_model, tile_size_m=args.tile_size, all_sizes=args.all_sizes)
     elif args.command == "compare":
-        cmd_compare(area_filter=args.area)
+        if args.compare_command == "sizes":
+            cmd_compare_sizes(
+                area_filter=args.area,
+                vegetation_model=args.vegetation_model,
+                resolution_m=args.resolution,
+                reference_size_m=args.reference_size,
+            )
+        elif args.compare_command == "models" or args.compare_command is None:
+            cmd_compare(area_filter=getattr(args, "area", None))
+        else:
+            cmp.print_help()
     elif args.command == "shadow":
         cmd_shadow(
             area_filter=args.area,

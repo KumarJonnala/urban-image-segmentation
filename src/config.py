@@ -6,7 +6,7 @@ from pathlib import Path
 WMS_URL   = "https://www.geodatenportal.sachsen-anhalt.de/wss/service/ST_LVermGeo_DOP_WMS_OpenData/guest"
 WMS_LAYER = "lsa_lvermgeo_dop20_2"
 
-# Default output resolution for fetched tiles (pixels), 1200 for smaller preview tiles and 4096 for full 20cm tiles, 
+# Default output resolution for fetched tiles (pixels)
 IMAGE_WIDTH  = 1200
 IMAGE_HEIGHT = 1200
 
