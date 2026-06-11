@@ -6,6 +6,8 @@ Subcommands:
   compare models    — run all vegetation methods side-by-side and print metrics
   compare sizes     — pairwise IoU across tile sizes on a shared UTM grid
   shadow            — cast tree shadows from segmentation maps for a given datetime
+  merge             — merge per-tile tree and shadow FGBs into one full-area FGB per size
+  render            — render merged tree/shadow polygons over the full-area orthophoto
   diurnal           — hourly shadow table + overlays for one tile across a full day
   status            — show what has been computed per area and tile size
   tune              — grid-search hyperparameters for a tunable model against a reference
@@ -25,6 +27,10 @@ Examples:
   python pipeline.py compare models --area ovgu_bbox
   python pipeline.py compare sizes --resolution 1.0 --reference-size 250
   python pipeline.py shadow --datetime-utc "2026-06-21T09:00:00" --all-sizes
+  python pipeline.py merge --all-sizes                               # merge trees + shadows for all sizes
+  python pipeline.py merge --layer trees --tile-size 250             # trees only at 250m
+  python pipeline.py render --all-sizes                              # full-area overlay image for all sizes
+  python pipeline.py render --tile-size 500                          # single size
   python pipeline.py diurnal --date-utc "2026-06-21" --tile 1_1 --tile-size 250
   python pipeline.py status --all-sizes
   python pipeline.py tune --model vari --tile 0_0
@@ -46,6 +52,29 @@ from src.segmentation import (
 VEGETATION_MODELS = ("vari", "deepforest", "samgeo", "segformer_b5", "deeplab",
                      "tcd_segformer", "ensemble")
 TUNABLE_MODELS = ("vari", "deepforest", "samgeo")
+
+
+def _merge_layer(area_name: str, vegetation_model: str, layer: str, out_dir):
+    """Concatenate per-tile FGB files for *layer* ('trees' or 'shadow') into one full-area FGB.
+
+    Writes {area}_{model}_{layer}_merged.fgb into out_dir and returns the path,
+    or None if no tile files are found.
+    """
+    import geopandas as gpd
+    import pandas as pd
+    from pathlib import Path as _Path
+
+    out_dir = _Path(out_dir)
+    fgb_files = sorted(out_dir.glob(f"{area_name}_tile_*_{vegetation_model}_{layer}.fgb"))
+    if not fgb_files:
+        return None
+    gdfs = [gdf for f in fgb_files for gdf in (gpd.read_file(f),) if len(gdf) > 0]
+    if not gdfs:
+        return None  # all tile FGBs exist but are empty (e.g. no shadows cast)
+    merged = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs="EPSG:25832")
+    out_path = out_dir / f"{area_name}_{vegetation_model}_{layer}_merged.fgb"
+    merged.to_file(out_path, driver="FlatGeobuf")
+    return out_path
 
 
 def _load_vegetation_model(name: str):
@@ -144,6 +173,10 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
                 fgb_path = seg_dir / f"{stem}_trees.fgb"
                 tree_gdf.to_file(fgb_path, driver="FlatGeobuf")
                 print(f"  {base_stem}: vectorized {len(tree_gdf)} tree(s) → {fgb_path.name}")
+
+            merged_path = _merge_layer(area_name, vegetation_model, "trees", seg_dir)
+            if merged_path:
+                print(f"  merged → {merged_path.name}")
 
 
 def cmd_compare(area_filter: str | None = None) -> None:
@@ -371,6 +404,10 @@ def cmd_shadow(
                 shadow_gdf.to_file(fgb_out, driver="FlatGeobuf")
                 print(f"  {stem}: shadow={coverage_pct:.1f}%  → {out_path.name}, {fgb_out.name}")
 
+            merged_path = _merge_layer(area_name, vegetation_model, "shadow", shadow_dir)
+            if merged_path:
+                print(f"  merged → {merged_path.name}")
+
 
 def cmd_tune(
     model: str = "vari",
@@ -529,6 +566,117 @@ def cmd_diurnal(
                                 title=f"{stem} — {when.strftime('%Y-%m-%d %H:%M UTC')}")
 
 
+def cmd_merge(
+    area_filter: str | None = None,
+    vegetation_model: str = DEFAULT_VEGETATION_MODEL,
+    tile_size_m: int | None = None,
+    all_sizes: bool = False,
+    layers: tuple[str, ...] = ("trees", "shadow"),
+) -> None:
+    """Merge per-tile tree and shadow FGB files into one full-area FGB per size."""
+    sizes = TILE_SIZES_M if all_sizes else [tile_size_m or TILE_SIZE_M]
+    areas = {k: v for k, v in AREAS.items() if area_filter is None or k == area_filter}
+    if not areas:
+        print(f"No area named {area_filter!r}. Available: {list(AREAS)}")
+        return
+
+    for area_name in areas:
+        for size in sizes:
+            dirs = {
+                "trees": OUTPUT_DIR / "segments" / f"{size}m",
+                "shadow": OUTPUT_DIR / "shadows" / f"{size}m",
+            }
+            for layer in layers:
+                out_dir = dirs[layer]
+                merged_path = _merge_layer(area_name, vegetation_model, layer, out_dir)
+                if merged_path:
+                    import geopandas as gpd
+                    n = len(gpd.read_file(merged_path))
+                    print(f"  {area_name} @ {size}m [{layer}]: {n} features → {merged_path.name}")
+                else:
+                    n_files = len(list(dirs[layer].glob(f"{area_name}_tile_*_{vegetation_model}_{layer}.fgb"))) if dirs[layer].exists() else 0
+                    reason = "all tile FGBs are empty" if n_files > 0 else "no tile FGBs found — run segment/shadow first"
+                    print(f"  {area_name} @ {size}m [{layer}]: {reason}")
+
+
+def cmd_render(
+    area_filter: str | None = None,
+    vegetation_model: str = DEFAULT_VEGETATION_MODEL,
+    tile_size_m: int | None = None,
+    all_sizes: bool = False,
+) -> None:
+    """Render merged tree + shadow FGB polygons over the full-area orthophoto and save as PNG."""
+    import geopandas as gpd
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+    from pyproj import Transformer
+
+    _to_utm = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
+
+    sizes = TILE_SIZES_M if all_sizes else [tile_size_m or TILE_SIZE_M]
+    areas = {k: v for k, v in AREAS.items() if area_filter is None or k == area_filter}
+    if not areas:
+        print(f"No area named {area_filter!r}. Available: {list(AREAS)}")
+        return
+
+    for area_name, area in areas.items():
+        full_img_path = OUTPUT_DIR / area_name / f"{area_name}_full.png"
+        if not full_img_path.exists():
+            print(f"  [skip] {full_img_path.name} not found — run 'download' first")
+            continue
+
+        img = np.array(Image.open(full_img_path).convert("RGB"))
+        west_m, south_m = _to_utm.transform(area["west"], area["south"])
+        east_m, north_m = _to_utm.transform(area["east"], area["north"])
+        extent = [west_m, east_m, south_m, north_m]
+
+        buildings_path = OUTPUT_DIR / f"buildings_{area_name}.fgb"
+        buildings_gdf = gpd.read_file(buildings_path) if buildings_path.exists() else None
+
+        for size in sizes:
+            seg_dir = OUTPUT_DIR / "segments" / f"{size}m"
+            shadow_dir = OUTPUT_DIR / "shadows" / f"{size}m"
+            trees_path = seg_dir / f"{area_name}_{vegetation_model}_trees_merged.fgb"
+            shadow_path = shadow_dir / f"{area_name}_{vegetation_model}_shadow_merged.fgb"
+
+            if not trees_path.exists():
+                print(f"  [skip] {trees_path.name} not found — run 'merge' first")
+                continue
+
+            trees_gdf = gpd.read_file(trees_path)
+            shadow_gdf = gpd.read_file(shadow_path) if shadow_path.exists() and shadow_path.stat().st_size > 0 else None
+
+            fig, ax = plt.subplots(figsize=(10, 10))
+            # orthophoto background — extent aligns UTM metres with polygon CRS
+            ax.imshow(img, extent=extent, origin="upper", aspect="equal")
+
+            if buildings_gdf is not None and len(buildings_gdf) > 0:
+                buildings_gdf.plot(ax=ax, facecolor="#d94747", edgecolor="#ffaaaa", linewidth=0.4, alpha=0.55, zorder=2)
+            if shadow_gdf is not None and len(shadow_gdf) > 0:
+                shadow_gdf.plot(ax=ax, facecolor="#1a1a4d", edgecolor="#aaaaff", linewidth=0.4, alpha=0.50, zorder=3)
+            if len(trees_gdf) > 0:
+                trees_gdf.plot(ax=ax, facecolor="#267326", edgecolor="#90ee90", linewidth=0.4, alpha=0.65, zorder=4)
+
+            ax.set_xlim(west_m, east_m)
+            ax.set_ylim(south_m, north_m)
+            ax.set_xlabel("Easting (m, EPSG:25832)")
+            ax.set_ylabel("Northing (m, EPSG:25832)")
+            ax.set_title(f"{area_name} @ {size}m tiles — {vegetation_model}", fontsize=11)
+
+            legend = [mpatches.Patch(color="#267326", label=f"Trees ({len(trees_gdf)})")]
+            if buildings_gdf is not None:
+                legend.append(mpatches.Patch(color="#d94747", label=f"Buildings ({len(buildings_gdf)})"))
+            if shadow_gdf is not None and len(shadow_gdf) > 0:
+                legend.append(mpatches.Patch(color="#1a1a4d", label=f"Shadows ({len(shadow_gdf)})"))
+            ax.legend(handles=legend, loc="lower right", fontsize=9, framealpha=0.85)
+
+            fig.tight_layout()
+            out_path = seg_dir / f"{area_name}_{vegetation_model}_{size}m_merged_render.png"
+            fig.savefig(out_path, dpi=150, bbox_inches="tight")
+            plt.close(fig)
+            print(f"  {area_name} @ {size}m: saved → {out_path.name}  ({len(trees_gdf)} trees)")
+
+
 def cmd_all(dry_run: bool = False, vegetation_model: str = DEFAULT_VEGETATION_MODEL, datetime_utc: str | None = None, tile_size_m: int | None = None, all_sizes: bool = False) -> None:
     cmd_download(dry_run=dry_run, tile_size_m=tile_size_m, all_sizes=all_sizes)
     if not dry_run:
@@ -604,6 +752,34 @@ if __name__ == "__main__":
     )
     shd.add_argument("--tile-size", type=int, default=None, metavar="M", help="Single tile size in metres")
     shd.add_argument("--all-sizes", action="store_true", help=f"Cast shadows for all TILE_SIZES_M {TILE_SIZES_M}")
+
+    rnd = sub.add_parser("render", help="Render merged tree/shadow polygons over the full-area orthophoto")
+    rnd.add_argument("--area", default=None, help="Limit to a single area name")
+    rnd.add_argument(
+        "--vegetation-model",
+        choices=VEGETATION_MODELS,
+        default=DEFAULT_VEGETATION_MODEL,
+        help=f"Which merged FGBs to render (default: {DEFAULT_VEGETATION_MODEL})",
+    )
+    rnd.add_argument("--tile-size", type=int, default=None, metavar="M", help="Single tile size in metres")
+    rnd.add_argument("--all-sizes", action="store_true", help=f"Render for all TILE_SIZES_M {TILE_SIZES_M}")
+
+    mrg = sub.add_parser("merge", help="Merge per-tile tree and shadow FGBs into one full-area FGB")
+    mrg.add_argument("--area", default=None, help="Limit to a single area name")
+    mrg.add_argument(
+        "--vegetation-model",
+        choices=VEGETATION_MODELS,
+        default=DEFAULT_VEGETATION_MODEL,
+        help=f"Which FGB files to merge (default: {DEFAULT_VEGETATION_MODEL})",
+    )
+    mrg.add_argument("--tile-size", type=int, default=None, metavar="M", help="Single tile size in metres")
+    mrg.add_argument("--all-sizes", action="store_true", help=f"Merge for all TILE_SIZES_M {TILE_SIZES_M}")
+    mrg.add_argument(
+        "--layer",
+        choices=("trees", "shadow", "both"),
+        default="both",
+        help="Which layer to merge (default: both)",
+    )
 
     tun = sub.add_parser("tune", help="Tune vegetation model hyperparameters against a reference")
     tun.add_argument(
@@ -691,6 +867,13 @@ if __name__ == "__main__":
             tile_size_m=args.tile_size,
             all_sizes=args.all_sizes,
         )
+    elif args.command == "render":
+        cmd_render(area_filter=args.area, vegetation_model=args.vegetation_model,
+                   tile_size_m=args.tile_size, all_sizes=args.all_sizes)
+    elif args.command == "merge":
+        layers = ("trees", "shadow") if args.layer == "both" else (args.layer,)
+        cmd_merge(area_filter=args.area, vegetation_model=args.vegetation_model,
+                  tile_size_m=args.tile_size, all_sizes=args.all_sizes, layers=layers)
     elif args.command == "status":
         cmd_status(area_filter=args.area, vegetation_model=args.vegetation_model, tile_size_m=args.tile_size, all_sizes=args.all_sizes)
     elif args.command == "diurnal":

@@ -34,6 +34,10 @@ python pipeline.py shadow --datetime-utc "2026-06-21T09:00:00" --tile-size 250
 # Hourly shadow table for one tile across a day
 python pipeline.py diurnal --date-utc "2026-06-21" --tile 1_1 --tile-size 250
 
+# Merge per-tile FGBs into one full-area FGB (also runs automatically after segment/shadow)
+python pipeline.py merge --all-sizes
+python pipeline.py merge --layer trees --tile-size 250
+
 # Check what has been computed
 python pipeline.py status --all-sizes
 
@@ -130,7 +134,7 @@ urban-shadow-analysis/
 │   │       └── ...
 │   ├── sentinel2/          # Sentinel-2 time-series GeoTIFFs
 │   └── sam_checkpoints/    # SAM ViT-B weights
-├── pipeline.py             # CLI: download / segment / compare {models,sizes} / shadow / diurnal / status / tune / all
+├── pipeline.py             # CLI: download / segment / compare {models,sizes} / shadow / merge / diurnal / status / tune / all
 ├── requirements.txt
 └── README.md
 ```
