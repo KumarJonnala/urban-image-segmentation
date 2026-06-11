@@ -16,6 +16,9 @@ scikit-learn
 scikit-image
 torch
 torchvision
+transformers
+geopandas
+shapely
 pyproj
 osmnx
 pysolar
