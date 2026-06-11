@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Usage examples:
 #
 #   sbatch slurm_urban_shadow.sh                                           # full pipeline @ 250m
@@ -13,15 +14,17 @@
 #   sbatch --export=COMMAND=render,TILE_SIZE=250    slurm_urban_shadow.sh  # render merged view
 #   sbatch --export=COMMAND=status                  slurm_urban_shadow.sh  # check progress
 #
+
 #SBATCH --job-name=urban_shadow
-#SBATCH --partition=gpu
 #SBATCH --output=logs/job_%j.out
 #SBATCH --error=logs/job_%j.err
 
+#SBATCH --partition=gpu
+#SBATCH --nodelist=ant1
 #SBATCH --gres=shard:8
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
-#SBATCH --time=12:00:00
+#SBATCH --time=8:00:00
 
 # --- environment ---
 set -euo pipefail
