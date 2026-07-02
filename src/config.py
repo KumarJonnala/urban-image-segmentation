@@ -27,6 +27,15 @@ DEFAULT_VEGETATION_MODEL = "tcd_segformer"
 # applying the allometric formula. 8 m ≈ 200 m² crown area.
 MAX_CROWN_RADIUS_M = 8.0
 
+# Allometric height model: H = exp(ALLOMETRIC_A + ALLOMETRIC_B * ln(CPA_m2))
+# Power-law form, direct inverse of ln(CPA) = a + α·ln(H).
+# Coefficients from direct inverse OLS on Schmucker et al. (2022) Table 4 species means
+# (hornbeam, white elm, field maple, wild service tree, beech, oak; SE Germany forests).
+# Forest trees are taller per crown unit than open-grown urban trees; these values are
+# an upper bound. Recalibrate with local LiDAR or ETH canopy height raster (ALTERNATIVES.md §1C).
+ALLOMETRIC_A = 1.831   # ln-space intercept
+ALLOMETRIC_B = 0.339   # power-law exponent on CPA (m²)
+
 # Geographic areas to fetch (bounding boxes in WGS84 lat/lon)
 AREAS = {
     "ovgu_bbox": {

@@ -12,7 +12,7 @@ from rasterio.transform import from_bounds
 from scipy.ndimage import label as cc_label
 from shapely.geometry import shape as sg_shape
 
-from src.config import MAX_CROWN_RADIUS_M
+from src.config import MAX_CROWN_RADIUS_M, ALLOMETRIC_A, ALLOMETRIC_B
 from src.shadow.solar import sun_position, _tile_center
 
 _to_utm = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
@@ -54,13 +54,13 @@ def estimate_tree_heights(
     pixel_size_m: float,
     min_component_pixels: int = 50,
     max_crown_radius_m: float = MAX_CROWN_RADIUS_M,
-) -> tuple[np.ndarray, dict[int, float]]:
-    """Estimate per-tree-cluster height from canopy area using an allometric formula.
+) -> tuple[np.ndarray, dict[int, tuple[float, float]]]:
+    """Estimate per-tree-cluster height from canopy area using a power-law allometric model.
 
     For each connected component:
         crown_area_m² = n_pixels × pixel_size_m²
-        crown_radius_m = sqrt(area / π)
-        tree_height_m  = crown_diameter × 0.7   (allometric: Hn ≈ 0.7 × 2r)
+        height_m      = exp(ALLOMETRIC_A + ALLOMETRIC_B × ln(crown_area_m²))
+                        (log-linear form: ln(H) = A + B·ln(CPA), fitted on Schmucker et al. 2022)
 
     Components whose equivalent crown radius exceeds max_crown_radius_m are split
     via watershed before height estimation, preventing the sqrt(N) height inflation
@@ -82,8 +82,8 @@ def estimate_tree_heights(
     -------
     labeled : np.ndarray
         Integer (H, W) array of component labels.
-    heights : dict[int, float]
-        Mapping of label → estimated tree_height_m.
+    heights : dict[int, tuple[float, float]]
+        Mapping of label → (tree_height_m, crown_radius_m).
     """
     from scipy.ndimage import distance_transform_edt
     from skimage.feature import peak_local_max
@@ -91,7 +91,7 @@ def estimate_tree_heights(
 
     labeled, n = cc_label(tree_mask, structure=_8CONN)
     labeled = labeled.astype(np.int32)
-    heights: dict[int, float] = {}
+    heights: dict[int, tuple[float, float]] = {}
     px_area = pixel_size_m ** 2
     next_label = int(labeled.max()) + 1
     min_dist_px = max(1, int(max_crown_radius_m * 0.5 / pixel_size_m))
@@ -106,7 +106,7 @@ def estimate_tree_heights(
         crown_radius_m = math.sqrt(crown_area_m2 / math.pi)
 
         if crown_radius_m <= max_crown_radius_m:
-            heights[k] = 2.0 * crown_radius_m * 0.7
+            heights[k] = (math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(crown_area_m2)), crown_radius_m)
             continue
 
         # Large cluster: watershed to recover individual crowns
@@ -114,8 +114,10 @@ def estimate_tree_heights(
         coords = peak_local_max(dist, min_distance=min_dist_px, labels=comp_mask.astype(np.int32))
 
         if len(coords) <= 1:
-            # Only one peak — cap the radius rather than split
-            heights[k] = 2.0 * min(crown_radius_m, max_crown_radius_m) * 0.7
+            # Only one peak — cap the area to a single-crown max before estimating height
+            capped_radius = min(crown_radius_m, max_crown_radius_m)
+            capped_area = math.pi * capped_radius ** 2
+            heights[k] = (math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(capped_area)), capped_radius)
             continue
 
         peaks_mask = np.zeros(dist.shape, dtype=bool)
@@ -131,9 +133,10 @@ def estimate_tree_heights(
             if sub_pixels < min_component_pixels:
                 labeled[sub_mask] = 0
                 continue
-            sub_radius_m = min(math.sqrt(sub_pixels * px_area / math.pi), max_crown_radius_m)
+            sub_area_m2 = sub_pixels * px_area
+            sub_radius_m = min(math.sqrt(sub_area_m2 / math.pi), max_crown_radius_m)
             labeled[sub_mask] = next_label
-            heights[next_label] = 2.0 * sub_radius_m * 0.7
+            heights[next_label] = (math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(sub_area_m2)), sub_radius_m)
             next_label += 1
 
         # Zero pixels still carrying original label k (small watershed regions)
@@ -174,7 +177,7 @@ def vectorize_trees(
             continue
         crown_area_m2 = n_pixels * px_area
         crown_radius_m = math.sqrt(crown_area_m2 / math.pi)
-        height_m = 2.0 * crown_radius_m * 0.7
+        height_m = math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(crown_area_m2))
 
         component = comp_mask.astype(np.uint8)
         polys = [
@@ -287,7 +290,7 @@ def cast_tree_shadows(
     if tree_gdf is not None and len(tree_gdf) > 0:
         transform = _bbox_to_transform(bbox, (H, W))
         labeled = np.zeros((H, W), dtype=np.int32)
-        heights: dict[int, float] = {}
+        heights: dict[int, tuple[float, float]] = {}
         for row in tree_gdf.itertuples():
             burned = rio_rasterize(
                 [(row.geometry, int(row.tree_id))],
@@ -295,7 +298,7 @@ def cast_tree_shadows(
                 fill=0, dtype=np.int32,
             )
             labeled = np.where(burned > 0, burned, labeled)
-            heights[int(row.tree_id)] = float(row.height_m)
+            heights[int(row.tree_id)] = (float(row.height_m), float(row.crown_radius_m))
     else:
         labeled, heights = estimate_tree_heights(
             seg_map == 1, pixel_size_m, min_component_pixels, max_crown_radius_m
@@ -304,8 +307,7 @@ def cast_tree_shadows(
     shadow_mask = np.zeros((H, W), dtype=bool)
     building_mask = seg_map == 3
 
-    for k, tree_height_m in heights.items():
-        crown_radius_m = tree_height_m / 1.4  # inverse of allometric (diameter×0.7)
+    for k, (tree_height_m, crown_radius_m) in heights.items():
         shadow_length_m = min(
             tree_height_m / math.tan(elevation_rad),
             max_shadow_factor * crown_radius_m,

@@ -38,6 +38,7 @@ Examples:
 """
 
 import argparse
+import time
 
 import numpy as np
 from PIL import Image
@@ -126,8 +127,9 @@ def cmd_download(dry_run: bool = False, tile_size_m: int | None = None, all_size
     sizes = TILE_SIZES_M if all_sizes else [tile_size_m or TILE_SIZE_M]
     for area_name, area in AREAS.items():
         if not dry_run:
+            t0 = time.perf_counter()
             full_path = fetch_full_area_image(area_name)
-            print(f"\n--- {area_name}: full-area image → {full_path.name} ---")
+            print(f"\n--- {area_name}: full-area image → {full_path.name} ({time.perf_counter()-t0:.1f}s) ---")
         for size in sizes:
             tiles = tiles_for_area(area, size)
             print(f"\n--- {area_name} @ {size}m: {len(tiles)} tile(s) ---")
@@ -135,8 +137,11 @@ def cmd_download(dry_run: bool = False, tile_size_m: int | None = None, all_size
                 for t in tiles:
                     print(f"  tile ({t['ix']},{t['iy']})  W={t['west']:.6f} S={t['south']:.6f} E={t['east']:.6f} N={t['north']:.6f}")
             else:
+                t0 = time.perf_counter()
                 paths = fetch_area_grid(area_name, tile_size_m=size)
-                print(f"  {len(paths)} tile(s) saved")
+                elapsed = time.perf_counter() - t0
+                n = len(paths)
+                print(f"  {n} tile(s) saved — {elapsed:.1f}s total, {elapsed/n:.2f}s/tile")
 
 
 def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: int | None = None, all_sizes: bool = False) -> None:
@@ -155,6 +160,8 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
             seg_dir = OUTPUT_DIR / "segments" / f"{size}m"
             print(f"\n--- {area_name} @ {size}m: segmenting {len(tiles)} tile(s) [{vegetation_model}] ---")
 
+            size_t0 = time.perf_counter()
+            processed = 0
             for t in tiles:
                 base_stem = f"{area_name}_tile_{t['ix']}_{t['iy']}"
                 tile_path = tile_dir / f"{base_stem}.png"
@@ -162,6 +169,7 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
                     print(f"  [skip] {base_stem}.png not found — run 'download' first")
                     continue
 
+                tile_t0 = time.perf_counter()
                 img = np.array(Image.open(tile_path).convert("RGB"))
                 tree_mask = mask_fn(img)
                 stem = f"{base_stem}_{vegetation_model}"
@@ -169,11 +177,16 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
                     img, t, buildings, roads, tree_mask,
                     out_dir=seg_dir, stem=stem,
                 )
-                print(f"  {base_stem}: saved {npy_path.name}, {png_path.name}")
                 tree_gdf = vectorize_trees(tree_mask, t, vegetation_model)
                 fgb_path = seg_dir / f"{stem}_trees.fgb"
                 tree_gdf.to_file(fgb_path, driver="FlatGeobuf")
-                print(f"  {base_stem}: vectorized {len(tree_gdf)} tree(s) → {fgb_path.name}")
+                tile_elapsed = time.perf_counter() - tile_t0
+                processed += 1
+                print(f"  {base_stem}: {len(tree_gdf)} tree(s) — {tile_elapsed:.1f}s")
+
+            if processed:
+                size_elapsed = time.perf_counter() - size_t0
+                print(f"  Timing [{size}m]: {processed} tile(s) in {size_elapsed:.1f}s — avg {size_elapsed/processed:.1f}s/tile")
 
             merged_path = _merge_layer(area_name, vegetation_model, "trees", seg_dir)
             if merged_path:
@@ -370,6 +383,8 @@ def cmd_shadow(
             seg_dir = OUTPUT_DIR / "segments" / f"{size}m"
             print(f"\n--- {area_name} @ {size}m: {len(tiles)} tile(s) ---")
 
+            size_t0 = time.perf_counter()
+            processed = 0
             for t in tiles:
                 stem = f"{area_name}_tile_{t['ix']}_{t['iy']}"
                 seg_path = seg_dir / f"{stem}_{vegetation_model}_seg.npy"
@@ -382,6 +397,7 @@ def cmd_shadow(
                     print(f"  [skip] {img_path.name} not found — run 'download' first")
                     continue
 
+                tile_t0 = time.perf_counter()
                 seg_map = np.load(seg_path)
                 img = np.array(Image.open(img_path).convert("RGB"))
 
@@ -397,7 +413,13 @@ def cmd_shadow(
                 shadow_gdf = vectorize_shadows(shadow_mask, t, when, vegetation_model)
                 fgb_out = shadow_dir / f"{stem}_{vegetation_model}_shadow.fgb"
                 shadow_gdf.to_file(fgb_out, driver="FlatGeobuf")
-                print(f"  {stem}: shadow={coverage_pct:.1f}%  → {out_path.name}, {fgb_out.name}")
+                tile_elapsed = time.perf_counter() - tile_t0
+                processed += 1
+                print(f"  {stem}: shadow={coverage_pct:.1f}% — {tile_elapsed:.1f}s")
+
+            if processed:
+                size_elapsed = time.perf_counter() - size_t0
+                print(f"  Timing [{size}m]: {processed} tile(s) in {size_elapsed:.1f}s — avg {size_elapsed/processed:.1f}s/tile")
 
             merged_path = _merge_layer(area_name, vegetation_model, "shadow", shadow_dir)
             if merged_path:

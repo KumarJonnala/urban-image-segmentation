@@ -11,3 +11,6 @@ lightning_logs/
 
 # credentials
 .env
+
+ALTERNATIVES.md
+METHODS.md
