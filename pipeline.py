@@ -9,6 +9,7 @@ Subcommands:
   shadow            — cast tree shadows from segmentation maps for a given datetime
   merge             — merge per-tile tree and shadow FGBs into one full-area FGB per size
   render            — render merged tree/shadow polygons over the full-area orthophoto
+  species-grid      — multi-panel PNG showing dominant BK species per tile for all tile sizes
   diurnal           — hourly shadow table + overlays for one tile across a full day
   status            — show what has been computed per area and tile size
   tune              — grid-search hyperparameters for a tunable model against a reference
@@ -32,6 +33,7 @@ Examples:
   python pipeline.py merge --layer trees --tile-size 250             # trees only at 250m
   python pipeline.py render --all-sizes                              # full-area overlay image for all sizes
   python pipeline.py render --tile-size 500                          # single size
+  python pipeline.py species-grid                                    # dominant-species grid for all tile sizes
   python pipeline.py diurnal --date-utc "2026-06-21" --tile 1_1 --tile-size 250
   python pipeline.py status --all-sizes
   python pipeline.py tune --model vari --tile 0_0
@@ -772,12 +774,110 @@ def cmd_render(
             else:
                 print(f"  {area_name} @ {size}m [shadow]: no shadow data — skipped")
 
+    cmd_species_grid(area_filter=area_filter)
+
+
+def cmd_species_grid(area_filter: str | None = None) -> None:
+    """Render dominant Baumkataster species per tile for all tile sizes as a single multi-panel PNG."""
+    import geopandas as gpd
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    from shapely.geometry import box
+    from pyproj import Transformer
+    from src.shadow.cadastre import tile_dominant_genus
+    from src.config import BAUMKATASTER_PATH
+
+    if BAUMKATASTER_PATH is None or not BAUMKATASTER_PATH.exists():
+        print("  [skip] BAUMKATASTER_PATH not set or missing — species grid unavailable")
+        return
+
+    _to_utm = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
+    bk = gpd.read_file(BAUMKATASTER_PATH)
+
+    areas = {k: v for k, v in AREAS.items() if area_filter is None or k == area_filter}
+
+    for area_name, area in areas.items():
+        full_img_path = OUTPUT_DIR / area_name / f"{area_name}_full.png"
+        if not full_img_path.exists():
+            print(f"  [skip] {full_img_path.name} not found — run 'download' first")
+            continue
+
+        img = np.array(Image.open(full_img_path).convert("RGB"))
+        west_m, south_m = _to_utm.transform(area["west"], area["south"])
+        east_m, north_m = _to_utm.transform(area["east"], area["north"])
+        extent = [west_m, east_m, south_m, north_m]
+
+        # Compute dominant species per tile for every tile size
+        all_species: set[str] = set()
+        all_tile_data: dict[int, list] = {}
+        for size in TILE_SIZES_M:
+            tiles = tiles_for_area(area, size)
+            records = []
+            for t in tiles:
+                w_m, s_m = _to_utm.transform(t["west"], t["south"])
+                e_m, n_m = _to_utm.transform(t["east"], t["north"])
+                tile_poly = box(w_m, s_m, e_m, n_m)
+                bk_tile = bk.clip(gpd.GeoDataFrame(geometry=[tile_poly], crs="EPSG:25832"))
+                genus = tile_dominant_genus(bk_tile)
+                label = genus.split()[0] if genus else "—"
+                records.append({"geometry": tile_poly, "species": genus or "—",
+                                "label": label, "n_bk": len(bk_tile)})
+                all_species.add(label)
+            all_tile_data[size] = records
+
+        species_list = sorted(all_species - {"—"})
+        palette = plt.cm.Set2.colors + plt.cm.Set1.colors
+        species_color = {s: palette[i % len(palette)] for i, s in enumerate(species_list)}
+        species_color["—"] = "#cccccc"
+
+        fig, axes = plt.subplots(2, 2, figsize=(18, 18))
+        fig.suptitle(f"Dominant Baumkataster species per tile — {area_name}",
+                     fontsize=15, fontweight="bold")
+
+        for ax, size in zip(axes.flat, TILE_SIZES_M):
+            records = all_tile_data[size]
+            tile_gdf = gpd.GeoDataFrame(records, crs="EPSG:25832")
+
+            ax.imshow(img, extent=extent, origin="upper", aspect="equal")
+            for _, row in tile_gdf.iterrows():
+                color = species_color.get(row["label"], "#cccccc")
+                gpd.GeoDataFrame([row], crs="EPSG:25832").plot(
+                    ax=ax, facecolor=color, edgecolor="white", linewidth=1.2, alpha=0.45, zorder=2
+                )
+                cx, cy = row.geometry.centroid.x, row.geometry.centroid.y
+                fontsize = max(5, min(9, size // 60))
+                ax.text(cx, cy, row["label"], ha="center", va="center",
+                        fontsize=fontsize, fontweight="bold", color="white",
+                        bbox=dict(facecolor="black", alpha=0.45, edgecolor="none", pad=1.5),
+                        zorder=3)
+
+            ax.set_xlim(west_m, east_m)
+            ax.set_ylim(south_m, north_m)
+            ax.set_title(f"{size} m tiles  ({len(records)} tiles)", fontsize=11)
+            ax.set_xlabel("Easting (m)", fontsize=8)
+            ax.set_ylabel("Northing (m)", fontsize=8)
+            ax.tick_params(labelsize=7)
+
+        legend_patches = [mpatches.Patch(color=species_color[s], label=s) for s in species_list]
+        legend_patches.append(mpatches.Patch(color="#cccccc", label="no BK data"))
+        fig.legend(handles=legend_patches, loc="lower center", ncol=6,
+                   fontsize=9, framealpha=0.9, title="Dominant genus",
+                   bbox_to_anchor=(0.5, 0.01))
+        plt.tight_layout(rect=[0, 0.06, 1, 0.97])
+
+        out = OUTPUT_DIR / "segments" / f"{area_name}_species_grid.png"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  {area_name} → {out.name}")
+
 
 def cmd_all(dry_run: bool = False, vegetation_model: str = DEFAULT_VEGETATION_MODEL, datetime_utc: str | None = None, tile_size_m: int | None = None, all_sizes: bool = False) -> None:
     cmd_download(dry_run=dry_run, tile_size_m=tile_size_m, all_sizes=all_sizes)
     if not dry_run:
         cmd_segment(vegetation_model=vegetation_model, tile_size_m=tile_size_m, all_sizes=all_sizes)
         cmd_shadow(vegetation_model=vegetation_model, datetime_utc=datetime_utc, tile_size_m=tile_size_m, all_sizes=all_sizes)
+        cmd_species_grid()
 
 
 if __name__ == "__main__":
@@ -909,6 +1009,9 @@ if __name__ == "__main__":
     sta.add_argument("--tile-size", type=int, default=None, metavar="M", help="Single tile size in metres")
     sta.add_argument("--all-sizes", action="store_true", help=f"Show status for all TILE_SIZES_M {TILE_SIZES_M}")
 
+    spg = sub.add_parser("species-grid", help="Multi-panel PNG: dominant BK species per tile for all tile sizes")
+    spg.add_argument("--area", default=None, help="Limit to a single area name")
+
     diu = sub.add_parser("diurnal", help="Hourly shadow table + overlays for one tile across a day")
     diu.add_argument("--area", default=None, help="Limit to a single area name")
     diu.add_argument(
@@ -966,6 +1069,8 @@ if __name__ == "__main__":
     elif args.command == "render":
         cmd_render(area_filter=args.area, vegetation_model=args.vegetation_model,
                    tile_size_m=args.tile_size, all_sizes=args.all_sizes)
+    elif args.command == "species-grid":
+        cmd_species_grid(area_filter=args.area)
     elif args.command == "merge":
         layers = ("trees", "shadow") if args.layer == "both" else (args.layer,)
         cmd_merge(area_filter=args.area, vegetation_model=args.vegetation_model,
