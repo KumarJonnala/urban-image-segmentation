@@ -27,6 +27,7 @@ set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
 mkdir -p logs
 
+source env/bin/activate
 pip install -q -r requirements.txt
 
 # --- pipeline ---

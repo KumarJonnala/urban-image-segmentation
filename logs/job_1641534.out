@@ -1,0 +1,91 @@
+Starting urban-shadow-analysis pipeline
+  Command   : all
+  Tile size : 250
+  Datetime  : 2026-06-21T10:00:00
+  Node      : ant1
+  Job ID    : 1641534
+  Time      : 2026-07-06 19:58 UTC
+Fetching ovgu_bbox_full.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/ovgu_bbox_full.png (3333.8 KB)
+
+--- ovgu_bbox: full-area image → ovgu_bbox_full.png (1.5s) ---
+
+--- ovgu_bbox @ 250m: 16 tile(s) ---
+Fetching ovgu_bbox_tile_0_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_0.png (3222.9 KB)
+Fetching ovgu_bbox_tile_0_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_1.png (3294.8 KB)
+Fetching ovgu_bbox_tile_0_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_2.png (3232.1 KB)
+Fetching ovgu_bbox_tile_0_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_3.png (2174.9 KB)
+Fetching ovgu_bbox_tile_1_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_0.png (3310.6 KB)
+Fetching ovgu_bbox_tile_1_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_1.png (3168.9 KB)
+Fetching ovgu_bbox_tile_1_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_2.png (2985.7 KB)
+Fetching ovgu_bbox_tile_1_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_3.png (2194.5 KB)
+Fetching ovgu_bbox_tile_2_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_0.png (3251.7 KB)
+Fetching ovgu_bbox_tile_2_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_1.png (3328.5 KB)
+Fetching ovgu_bbox_tile_2_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_2.png (3375.7 KB)
+Fetching ovgu_bbox_tile_2_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_3.png (2191.3 KB)
+Fetching ovgu_bbox_tile_3_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_0.png (1849.5 KB)
+Fetching ovgu_bbox_tile_3_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_1.png (1848.3 KB)
+Fetching ovgu_bbox_tile_3_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_2.png (1857.7 KB)
+Fetching ovgu_bbox_tile_3_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_3.png (1226.2 KB)
+  16 tile(s) saved — 16.0s total, 1.00s/tile
+  Loading TCD SegFormer (restor/tcd-segformer-mit-b5)...
+  Baumkataster: 85,302 trees loaded from Baeume_SFM_2026.gpkg
+  OSM: 261 buildings, 1078 roads
+
+--- ovgu_bbox @ 250m: segmenting 16 tile(s) [tcd_segformer] ---
+  ovgu_bbox_tile_0_0: 57 tree(s) [Platanus acerifolia], 25 BK-matched — 2.3s
+  ovgu_bbox_tile_0_1: 82 tree(s) [Tilia euchlora], 19 BK-matched — 2.4s
+  ovgu_bbox_tile_0_2: 65 tree(s) [Quercus robur], 27 BK-matched — 2.2s
+  ovgu_bbox_tile_0_3: 43 tree(s) [Populus simonii], 4 BK-matched — 1.6s
+  ovgu_bbox_tile_1_0: 82 tree(s) [Tilia cordata], 26 BK-matched — 2.4s
+  ovgu_bbox_tile_1_1: 93 tree(s) [Tilia euchlora], 33 BK-matched — 2.7s
+  ovgu_bbox_tile_1_2: 69 tree(s) [Tilia cordata], 52 BK-matched — 2.3s
+  ovgu_bbox_tile_1_3: 40 tree(s) [Quercus robur], 4 BK-matched — 1.6s
+  ovgu_bbox_tile_2_0: 105 tree(s) [Tilia cordata], 36 BK-matched — 2.8s
+  ovgu_bbox_tile_2_1: 70 tree(s) [Sorbus intermedia], 8 BK-matched — 2.2s
+  ovgu_bbox_tile_2_2: 55 tree(s) [Robinia pseudoacacia], 8 BK-matched — 2.0s
+  ovgu_bbox_tile_2_3: 65 tree(s), 0 BK-matched — 1.8s
+  ovgu_bbox_tile_3_0: 42 tree(s) [Acer platanoides], 24 BK-matched — 1.4s
+  ovgu_bbox_tile_3_1: 24 tree(s) [Sorbus thuringiaca 'Fastigiata'], 1 BK-matched — 1.1s
+  ovgu_bbox_tile_3_2: 23 tree(s) [Amelanchier lamarckii], 7 BK-matched — 1.1s
+  ovgu_bbox_tile_3_3: 27 tree(s), 0 BK-matched — 1.0s
+  Timing [250m]: 16 tile(s) in 30.7s — avg 1.9s/tile
+  merged → ovgu_bbox_tcd_segformer_trees_merged.fgb
+Shadow casting for 2026-06-21 10:00 UTC
+
+--- ovgu_bbox @ 250m: 16 tile(s) ---
+  ovgu_bbox_tile_0_0: shadow=17.0% — 1.6s
+  ovgu_bbox_tile_0_1: shadow=10.4% — 1.7s
+  ovgu_bbox_tile_0_2: shadow=12.3% — 1.6s
+  ovgu_bbox_tile_0_3: shadow=9.8% — 1.4s
+  ovgu_bbox_tile_1_0: shadow=13.6% — 1.7s
+  ovgu_bbox_tile_1_1: shadow=14.3% — 1.8s
+  ovgu_bbox_tile_1_2: shadow=18.3% — 1.8s
+  ovgu_bbox_tile_1_3: shadow=9.9% — 1.4s
+  ovgu_bbox_tile_2_0: shadow=10.5% — 1.8s
+  ovgu_bbox_tile_2_1: shadow=7.4% — 1.6s
+  ovgu_bbox_tile_2_2: shadow=5.8% — 1.5s
+  ovgu_bbox_tile_2_3: shadow=8.2% — 1.5s
+  ovgu_bbox_tile_3_0: shadow=8.8% — 1.3s
+  ovgu_bbox_tile_3_1: shadow=6.1% — 1.1s
+  ovgu_bbox_tile_3_2: shadow=1.9% — 1.1s
+  ovgu_bbox_tile_3_3: shadow=8.8% — 1.1s
+  Timing [250m]: 16 tile(s) in 24.2s — avg 1.5s/tile
+  merged → ovgu_bbox_tcd_segformer_shadow_merged.fgb
+Done: 2026-07-06 19:59 UTC
