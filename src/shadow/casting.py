@@ -12,7 +12,7 @@ from rasterio.transform import from_bounds
 from scipy.ndimage import label as cc_label
 from shapely.geometry import shape as sg_shape
 
-from src.config import MAX_CROWN_RADIUS_M, ALLOMETRIC_A, ALLOMETRIC_B
+from src.config import MAX_CROWN_RADIUS_M, ALLOMETRIC_A, ALLOMETRIC_B, ALLOMETRIC_PROFILES
 from src.shadow.solar import sun_position, _tile_center
 
 _to_utm = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
@@ -54,6 +54,7 @@ def estimate_tree_heights(
     pixel_size_m: float,
     min_component_pixels: int = 50,
     max_crown_radius_m: float = MAX_CROWN_RADIUS_M,
+    dominant_genus: str | None = None,
 ) -> tuple[np.ndarray, dict[int, tuple[float, float]]]:
     """Estimate per-tree-cluster height from canopy area using a power-law allometric model.
 
@@ -89,6 +90,9 @@ def estimate_tree_heights(
     from skimage.feature import peak_local_max
     from skimage.segmentation import watershed
 
+    A, B = ALLOMETRIC_PROFILES.get(dominant_genus, (ALLOMETRIC_A, ALLOMETRIC_B)) \
+           if dominant_genus else (ALLOMETRIC_A, ALLOMETRIC_B)
+
     labeled, n = cc_label(tree_mask, structure=_8CONN)
     labeled = labeled.astype(np.int32)
     heights: dict[int, tuple[float, float]] = {}
@@ -106,7 +110,7 @@ def estimate_tree_heights(
         crown_radius_m = math.sqrt(crown_area_m2 / math.pi)
 
         if crown_radius_m <= max_crown_radius_m:
-            heights[k] = (math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(crown_area_m2)), crown_radius_m)
+            heights[k] = (math.exp(A + B * math.log(crown_area_m2)), crown_radius_m)
             continue
 
         # Large cluster: watershed to recover individual crowns
@@ -117,7 +121,7 @@ def estimate_tree_heights(
             # Only one peak — cap the area to a single-crown max before estimating height
             capped_radius = min(crown_radius_m, max_crown_radius_m)
             capped_area = math.pi * capped_radius ** 2
-            heights[k] = (math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(capped_area)), capped_radius)
+            heights[k] = (math.exp(A + B * math.log(capped_area)), capped_radius)
             continue
 
         peaks_mask = np.zeros(dist.shape, dtype=bool)
@@ -136,7 +140,7 @@ def estimate_tree_heights(
             sub_area_m2 = sub_pixels * px_area
             sub_radius_m = min(math.sqrt(sub_area_m2 / math.pi), max_crown_radius_m)
             labeled[sub_mask] = next_label
-            heights[next_label] = (math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(sub_area_m2)), sub_radius_m)
+            heights[next_label] = (math.exp(A + B * math.log(sub_area_m2)), sub_radius_m)
             next_label += 1
 
         # Zero pixels still carrying original label k (small watershed regions)
@@ -150,6 +154,8 @@ def vectorize_trees(
     bbox: dict,
     vegetation_model: str,
     min_component_pixels: int = 50,
+    dominant_genus: str | None = None,
+    max_crown_radius_m: float = MAX_CROWN_RADIUS_M,
 ) -> gpd.GeoDataFrame:
     """Convert a tree mask to georeferenced polygon features in EPSG:25832.
 
@@ -166,6 +172,9 @@ def vectorize_trees(
     transform = _bbox_to_transform(bbox, (H, W))
     px_area = pixel_size_m ** 2
 
+    A, B = ALLOMETRIC_PROFILES.get(dominant_genus, (ALLOMETRIC_A, ALLOMETRIC_B)) \
+           if dominant_genus else (ALLOMETRIC_A, ALLOMETRIC_B)
+
     labeled, n = cc_label(tree_mask, structure=_8CONN)
     labeled = labeled.astype(np.int32)
 
@@ -177,7 +186,7 @@ def vectorize_trees(
             continue
         crown_area_m2 = n_pixels * px_area
         crown_radius_m = math.sqrt(crown_area_m2 / math.pi)
-        height_m = math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(crown_area_m2))
+        height_m = math.exp(A + B * math.log(crown_area_m2))
 
         component = comp_mask.astype(np.uint8)
         polys = [

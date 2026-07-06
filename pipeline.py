@@ -164,9 +164,21 @@ def cmd_download(dry_run: bool = False, tile_size_m: int | None = None, all_size
 
 
 def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: int | None = None, all_sizes: bool = False) -> None:
+    import geopandas as gpd
+    from shapely.geometry import box as shapely_box
+    from pyproj import Transformer
     from src.shadow.casting import vectorize_trees
+    from src.shadow.cadastre import enrich_from_baumkataster, tile_dominant_genus
+    from src.config import BAUMKATASTER_PATH, ALLOMETRIC_PROFILES, CROWN_RADIUS_BY_GENUS, MAX_CROWN_RADIUS_M
+
     sizes = TILE_SIZES_M if all_sizes else [tile_size_m or TILE_SIZE_M]
     _, mask_fn = _load_vegetation_model(vegetation_model)
+    _to_utm = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
+
+    bk_gdf = None
+    if BAUMKATASTER_PATH and BAUMKATASTER_PATH.exists():
+        bk_gdf = gpd.read_file(BAUMKATASTER_PATH)
+        print(f"  Baumkataster: {len(bk_gdf):,} trees loaded from {BAUMKATASTER_PATH.name}")
 
     for area_name, area in AREAS.items():
         buildings = fetch_buildings(area, cache_path=OUTPUT_DIR / f"buildings_{area_name}.fgb")
@@ -192,16 +204,38 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
                 img = np.array(Image.open(tile_path).convert("RGB"))
                 tree_mask = mask_fn(img)
                 stem = f"{base_stem}_{vegetation_model}"
+
+                # Baumkataster enrichment: tile clip → dominant genus → species allometry
+                bk_tile = None
+                genus = None
+                max_r = MAX_CROWN_RADIUS_M
+                if bk_gdf is not None:
+                    w_m, s_m = _to_utm.transform(t["west"], t["south"])
+                    e_m, n_m = _to_utm.transform(t["east"], t["north"])
+                    tile_poly = gpd.GeoDataFrame(
+                        geometry=[shapely_box(w_m, s_m, e_m, n_m)], crs="EPSG:25832"
+                    )
+                    bk_tile = bk_gdf.clip(tile_poly)
+                    genus = tile_dominant_genus(bk_tile)
+                    max_r = CROWN_RADIUS_BY_GENUS.get(genus, MAX_CROWN_RADIUS_M) if genus else MAX_CROWN_RADIUS_M
+
                 npy_path, png_path = save_segmentation(
                     img, t, buildings, roads, tree_mask,
                     out_dir=seg_dir, stem=stem,
                 )
-                tree_gdf = vectorize_trees(tree_mask, t, vegetation_model)
+                tree_gdf = vectorize_trees(
+                    tree_mask, t, vegetation_model,
+                    dominant_genus=genus, max_crown_radius_m=max_r,
+                )
+                if bk_tile is not None:
+                    tree_gdf = enrich_from_baumkataster(tree_gdf, bk_tile)
                 fgb_path = seg_dir / f"{stem}_trees.fgb"
                 tree_gdf.to_file(fgb_path, driver="FlatGeobuf")
                 tile_elapsed = time.perf_counter() - tile_t0
                 processed += 1
-                print(f"  {base_stem}: {len(tree_gdf)} tree(s) — {tile_elapsed:.1f}s")
+                genus_tag = f" [{genus}]" if genus else ""
+                n_matched = (tree_gdf["height_source"] == "measured").sum() if "height_source" in tree_gdf.columns else 0
+                print(f"  {base_stem}: {len(tree_gdf)} tree(s){genus_tag}, {n_matched} BK-matched — {tile_elapsed:.1f}s")
 
             if processed:
                 size_elapsed = time.perf_counter() - size_t0
@@ -380,6 +414,7 @@ def cmd_shadow(
     all_sizes: bool = False,
 ) -> None:
     import datetime as dt
+    import geopandas as gpd
     from src.shadow import cast_tree_shadows, save_shadow_overlay, vectorize_shadows
 
     if datetime_utc is None:
@@ -420,7 +455,9 @@ def cmd_shadow(
                 seg_map = np.load(seg_path)
                 img = np.array(Image.open(img_path).convert("RGB"))
 
-                shadow_mask = cast_tree_shadows(seg_map, t, when)
+                fgb_path = seg_dir / f"{stem}_{vegetation_model}_trees.fgb"
+                tree_gdf_shadow = gpd.read_file(fgb_path) if fgb_path.exists() else None
+                shadow_mask = cast_tree_shadows(seg_map, t, when, tree_gdf=tree_gdf_shadow)
                 coverage_pct = shadow_mask.mean() * 100
 
                 out_path = shadow_dir / f"{stem}_{vegetation_model}_shadow.png"
