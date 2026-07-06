@@ -79,6 +79,25 @@ def _merge_layer(area_name: str, vegetation_model: str, layer: str, out_dir):
     return out_path
 
 
+def _dissolve_for_render(gdf: "gpd.GeoDataFrame", snap_m: float = 0.3) -> "gpd.GeoDataFrame":
+    """Merge touching polygons to remove watershed ridge and tile-boundary seams for rendering.
+
+    buffer(+snap) closes 1-pixel gaps → unary_union merges touching polygons →
+    buffer(-snap) restores the original boundary extent.
+    Returns a geometry-only GeoDataFrame; attributes are not preserved.
+    snap_m=0.3 is just above the 0.2 m/pixel DOP20 resolution.
+    """
+    import geopandas as gpd
+    from shapely.ops import unary_union
+    union = unary_union(gdf.geometry.buffer(snap_m))
+    dissolved = gpd.GeoDataFrame(
+        geometry=gpd.GeoSeries([union], crs=gdf.crs).explode(index_parts=False),
+        crs=gdf.crs,
+    ).reset_index(drop=True)
+    dissolved["geometry"] = dissolved.geometry.buffer(-snap_m)
+    return dissolved
+
+
 def _load_vegetation_model(name: str):
     """Load the requested model and return a callable mask_fn(img) -> bool array."""
     if name == "vari":
@@ -663,13 +682,17 @@ def cmd_render(
             trees_gdf = gpd.read_file(trees_path)
             shadow_gdf = gpd.read_file(shadow_path) if shadow_path.exists() and shadow_path.stat().st_size > 0 else None
 
+            # Dissolve for rendering only — on-disk FGBs with attributes are unchanged
+            trees_render  = _dissolve_for_render(trees_gdf) if len(trees_gdf) > 0 else trees_gdf
+            shadow_render = _dissolve_for_render(shadow_gdf) if shadow_gdf is not None and len(shadow_gdf) > 0 else shadow_gdf
+
             # --- Figure 1: post-segmentation ---
             fig, ax = plt.subplots(figsize=(10, 10))
             ax.imshow(img, extent=extent, origin="upper", aspect="equal")
             if buildings_gdf is not None and len(buildings_gdf) > 0:
-                buildings_gdf.plot(ax=ax, facecolor="#d94747", edgecolor="#ffaaaa", linewidth=0.4, alpha=0.55, zorder=2)
-            if len(trees_gdf) > 0:
-                trees_gdf.plot(ax=ax, facecolor="#267326", edgecolor="#90ee90", linewidth=0.4, alpha=0.65, zorder=4)
+                buildings_gdf.plot(ax=ax, facecolor="#d94747", edgecolor="none", alpha=0.55, zorder=2)
+            if len(trees_render) > 0:
+                trees_render.plot(ax=ax, facecolor="#267326", edgecolor="#90ee90", linewidth=0.4, alpha=0.65, zorder=4)
             ax.set_xlim(west_m, east_m)
             ax.set_ylim(south_m, north_m)
             ax.set_xlabel("Easting (m, EPSG:25832)")
@@ -686,13 +709,13 @@ def cmd_render(
             print(f"  {area_name} @ {size}m [seg]:    → {seg_render_path.name}  ({len(trees_gdf)} trees)")
 
             # --- Figure 2: post-shadow ---
-            if shadow_gdf is not None and len(shadow_gdf) > 0:
+            if shadow_render is not None and len(shadow_render) > 0:
                 fig, ax = plt.subplots(figsize=(10, 10))
                 ax.imshow(img, extent=extent, origin="upper", aspect="equal")
                 if buildings_gdf is not None and len(buildings_gdf) > 0:
-                    buildings_gdf.plot(ax=ax, facecolor="#d94747", edgecolor="#ffaaaa", linewidth=0.4, alpha=0.55, zorder=2)
-                shadow_gdf.plot(ax=ax, facecolor="#1a1a4d", edgecolor="#aaaaff", linewidth=0.4, alpha=0.50, zorder=3)
-                trees_gdf.plot(ax=ax, facecolor="#267326", edgecolor="#90ee90", linewidth=0.4, alpha=0.65, zorder=4)
+                    buildings_gdf.plot(ax=ax, facecolor="#d94747", edgecolor="none", alpha=0.55, zorder=2)
+                shadow_render.plot(ax=ax, facecolor="#1a1a4d", edgecolor="none", alpha=0.50, zorder=3)
+                trees_render.plot(ax=ax, facecolor="#267326", edgecolor="#90ee90", linewidth=0.4, alpha=0.65, zorder=4)
                 ax.set_xlim(west_m, east_m)
                 ax.set_ylim(south_m, north_m)
                 ax.set_xlabel("Easting (m, EPSG:25832)")
