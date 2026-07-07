@@ -819,8 +819,8 @@ def cmd_species_grid(area_filter: str | None = None) -> None:
                 tile_poly = box(w_m, s_m, e_m, n_m)
                 bk_tile = bk.clip(gpd.GeoDataFrame(geometry=[tile_poly], crs="EPSG:25832"))
                 genus = tile_dominant_genus(bk_tile)
-                label = genus.split()[0] if genus else "—"
-                records.append({"geometry": tile_poly, "species": genus or "—",
+                label = genus if genus else "—"
+                records.append({"geometry": tile_poly, "species": label,
                                 "label": label, "n_bk": len(bk_tile)})
                 all_species.add(label)
             all_tile_data[size] = records
