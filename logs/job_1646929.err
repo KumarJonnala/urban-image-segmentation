@@ -1,0 +1,4 @@
+WARNING: You are using pip version 21.3.1; however, version 26.0.1 is available.
+You should consider upgrading via the '/home/bumu60du/HiWi1/urban-shadow-analysis/env/bin/python3 -m pip install --upgrade pip' command.
+/home/bumu60du/HiWi1/urban-shadow-analysis/env/lib64/python3.9/site-packages/networkx/utils/backends.py:135: RuntimeWarning: networkx backend defined more than once: nx-loopback
+  backends.update(_get_backends("networkx.backends"))
