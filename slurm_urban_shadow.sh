@@ -2,10 +2,10 @@
 #
 # Examples:
 #   sbatch slurm_urban_shadow.sh
-#   sbatch --export=COMMAND=all,TILE_SIZE=all                                        slurm_urban_shadow.sh
+#   sbatch --export=COMMAND=all,TILE_SIZE=all,DATETIME="2026-06-21T12:00:00"         slurm_urban_shadow.sh
+#   sbatch --export=COMMAND=segment,TILE_SIZE=all slurm_urban_shadow.sh
 #   sbatch --export=COMMAND=shadow,TILE_SIZE=250,DATETIME="2026-06-21T10:00:00"      slurm_urban_shadow.sh
 #   sbatch --export=COMMAND=shadow,TILE_SIZE=all,DATETIME="2026-06-21T12:00:00"      slurm_urban_shadow.sh
-#   sbatch --export=COMMAND=segment,TILE_SIZE=100                                    slurm_urban_shadow.sh
 #   sbatch --export=COMMAND=merge,TILE_SIZE=250                                      slurm_urban_shadow.sh
 #   sbatch --export=COMMAND=render,TILE_SIZE=250                                     slurm_urban_shadow.sh
 #   sbatch --export=COMMAND=status                                                   slurm_urban_shadow.sh
