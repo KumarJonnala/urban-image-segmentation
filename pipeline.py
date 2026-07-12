@@ -232,10 +232,11 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
 
         genus = None
         if len(bk_clip) > 0:
-            vc = bk_clip["Gattung lang"].str.split().str[0].value_counts()
+            vc = bk_clip["Gattung lang"].str.split(",").str[0].str.strip().value_counts()
             genus = vc.index[0] if len(vc) > 0 else None
 
         records.append({
+            "ix": t["ix"], "iy": t["iy"],
             "geometry": tile_poly,
             "genus": genus or "—",
             "bias": bias, "mae": mae,
@@ -243,6 +244,10 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
             "ratio": ratio,
             "mean_h": mean_h,
             "n_matched": n_matched,
+            "n_pipe": n_pipe,
+            "n_bk": len(bk_valid),
+            "pipe_area": pipe_area,
+            "bk_area": bk_area,
         })
 
     # Build genus colour map (categorical)
@@ -281,6 +286,13 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
         "mean_h": _safe_norm([r["mean_h"] for r in records]),
     }
 
+    def _abbrev_species(name: str) -> str:
+        """Abbreviate 'Tilia cordata' → 'T. cordata' to fit inside tile labels."""
+        parts = name.split()
+        if len(parts) >= 2:
+            return f"{parts[0][0]}. {' '.join(parts[1:])}"
+        return name
+
     for ax, key, title, cmap, norm, fmt, use_genus in panel_cfg:
         ax.imshow(full_img, extent=extent, origin="upper", aspect="equal")
         if use_genus:
@@ -294,14 +306,19 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
             if use_genus:
                 color = genus_color[val]
                 gdf_t.plot(ax=ax, facecolor=color, edgecolor="white", linewidth=1, alpha=0.55, zorder=2)
-                lbl = str(val)
+                lbl = _abbrev_species(val) if val != "—" else "—"
             elif val is None:
                 gdf_t.plot(ax=ax, facecolor="#888888", edgecolor="white", linewidth=1, alpha=0.5, zorder=2)
                 lbl = "—"
             else:
                 color = cmap(actual_norm(val))
                 gdf_t.plot(ax=ax, facecolor=color, edgecolor="white", linewidth=1, alpha=0.6, zorder=2)
-                lbl = fmt.format(val)
+                if key == "match_rate":
+                    lbl = f"{r['n_matched']} / {r['n_pipe']}\n{val:.0f}%"
+                elif key == "ratio":
+                    lbl = f"{r['pipe_area']:.0f} / {r['bk_area']:.0f} m²\n= {val:.2f}"
+                else:
+                    lbl = fmt.format(val)
 
             cx, cy = r["geometry"].centroid.x, r["geometry"].centroid.y
             ax.text(cx, cy, lbl, ha="center", va="center", fontsize=7, fontweight="bold",
@@ -320,10 +337,196 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
             sm.set_array([])
             plt.colorbar(sm, ax=ax, shrink=0.65, pad=0.02)
 
-    plt.tight_layout()
+    # Aggregate totals for all footer lines
+    total_matched   = sum(r["n_matched"]  for r in records)
+    total_pipe      = sum(r["n_pipe"]     for r in records)
+    total_pipe_area = sum(r["pipe_area"]  for r in records)
+    total_bk_area   = sum(r["bk_area"]   for r in records)
+    match_pct_total = total_matched / total_pipe * 100 if total_pipe > 0 else 0
+    ratio_total     = total_pipe_area / total_bk_area  if total_bk_area > 0 else 0
+
+    bias_vals    = [r["bias"]   for r in records if r["bias"]   is not None]
+    mae_vals     = [r["mae"]    for r in records if r["mae"]    is not None]
+    mean_h_vals  = [r["mean_h"] for r in records if r["mean_h"] is not None]
+    total_bias   = sum(bias_vals)   / len(bias_vals)   if bias_vals   else None
+    total_mae    = sum(mae_vals)    / len(mae_vals)    if mae_vals    else None
+    total_mean_h = sum(mean_h_vals) / len(mean_h_vals) if mean_h_vals else None
+
+    # Write tile summary JSON (before figure, so it saves even if matplotlib fails)
+    import json as _json
+    json_path = _Path(seg_dir) / f"tile_summary_{tile_size_m}m.json"
+    json_data = {
+        "area_name": area_name,
+        "tile_size_m": tile_size_m,
+        "n_tiles": len(records),
+        "summary": {
+            "bias_m":             round(total_bias,   3) if total_bias   is not None else None,
+            "mae_m":              round(total_mae,    3) if total_mae    is not None else None,
+            "mean_height_m":      round(total_mean_h, 3) if total_mean_h is not None else None,
+            "n_matched":          total_matched,
+            "n_segmented":        total_pipe,
+            "match_rate_pct":     round(match_pct_total, 1),
+            "pipe_crown_area_m2": round(total_pipe_area, 1),
+            "bk_crown_area_m2":   round(total_bk_area,   1),
+            "crown_area_ratio":   round(ratio_total, 3) if total_bk_area > 0 else None,
+        },
+        "tiles": [
+            {
+                "ix": r["ix"], "iy": r["iy"],
+                "genus":              r["genus"],
+                "bias_m":             round(r["bias"],       3) if r["bias"]       is not None else None,
+                "mae_m":              round(r["mae"],        3) if r["mae"]        is not None else None,
+                "match_rate_pct":     round(r["match_rate"], 1) if r["match_rate"] is not None else None,
+                "n_matched":          r["n_matched"],
+                "n_segmented":        r["n_pipe"],
+                "n_bk":               r["n_bk"],
+                "pipe_crown_area_m2": round(r["pipe_area"], 1),
+                "bk_crown_area_m2":   round(r["bk_area"],  1),
+                "crown_area_ratio":   round(r["ratio"], 3) if r["ratio"] is not None else None,
+                "mean_height_m":      round(r["mean_h"], 3) if r["mean_h"] is not None else None,
+            }
+            for r in records
+        ],
+    }
+    json_path.write_text(_json.dumps(json_data, indent=2))
+    print(f"  tile summary JSON → {json_path.name}")
+
+    # Reserve bottom margin so footers don't overlap panel content
+    plt.tight_layout(rect=[0, 0.05, 1, 1])
+
+    footers = [
+        (axes[0, 1], f"Area total  bias = {total_bias:+.2f} m"  if total_bias  is not None else "—"),
+        (axes[0, 2], f"Area total  MAE = {total_mae:.2f} m"      if total_mae   is not None else "—"),
+        (axes[1, 0], f"Total: {total_matched} matched / {total_pipe} segmented ({match_pct_total:.0f}%)"),
+        (axes[1, 1], f"Total: {total_pipe_area:.0f} m² pipeline / {total_bk_area:.0f} m² BK  (ratio {ratio_total:.2f})"),
+        (axes[1, 2], f"Area mean height = {total_mean_h:.1f} m"  if total_mean_h is not None else "—"),
+    ]
+    for ax_f, txt in footers:
+        ax_f.text(0.5, -0.08, txt, transform=ax_f.transAxes,
+                  ha="center", va="top", fontsize=9)
+
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  tile summary → {out_path.name}")
+
+
+def _save_location_map(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m: int) -> None:
+    """Save a 2-panel location map: BK crown circles (left) and pipeline trees (right).
+
+    Both panels share an orthophoto background and tile-grid overlay.
+    Saved as location_map_{tile_size_m}m.png in seg_dir.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mcolors
+    from pathlib import Path as _Path
+    from PIL import Image as _PILImage
+    from pyproj import Transformer as _Transformer
+    import geopandas as gpd
+    from shapely.geometry import box as _box
+    from src.data_preprocessing import tiles_for_area
+
+    out_path = _Path(seg_dir) / f"location_map_{tile_size_m}m.png"
+    full_img_path = OUTPUT_DIR / area_name / f"{area_name}_full.png"
+    if not full_img_path.exists():
+        print(f"  [location_map] orthophoto not found, skipping: {full_img_path}")
+        return
+
+    _to_utm = _Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
+    full_img = np.array(_PILImage.open(full_img_path).convert("RGB"))
+    ovgu = AREAS[area_name]
+    west_m, south_m = _to_utm.transform(ovgu["west"], ovgu["south"])
+    east_m, north_m = _to_utm.transform(ovgu["east"], ovgu["north"])
+    extent = [west_m, east_m, south_m, north_m]
+    area_bbox = gpd.GeoDataFrame(
+        geometry=[_box(west_m, south_m, east_m, north_m)], crs="EPSG:25832"
+    )
+
+    # Tile grid boundaries for overlay
+    tiles = tiles_for_area(AREAS[area_name], tile_size_m)
+    tile_boundaries = [
+        gpd.GeoDataFrame(
+            geometry=[_box(
+                *_to_utm.transform(t["west"], t["south"]),
+                *_to_utm.transform(t["east"], t["north"])
+            )],
+            crs="EPSG:25832",
+        )
+        for t in tiles
+    ]
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 8))
+    fig.suptitle(
+        f"{area_name}  |  {tile_size_m} m tiles  |  location map",
+        fontsize=13,
+    )
+
+    # ── Left panel: BK crown circles ──────────────────────────────────────────
+    ax = axes[0]
+    ax.imshow(full_img, extent=extent, origin="upper", aspect="equal")
+
+    if bk_gdf is not None:
+        bk_clip = bk_gdf.clip(area_bbox).reset_index(drop=True)
+        bk_no_crown = bk_clip[bk_clip["Kronendurchmesser"] <= 0]
+        bk_valid    = bk_clip[bk_clip["Kronendurchmesser"] > 0].copy()
+
+        if len(bk_no_crown) > 0:
+            bk_no_crown.plot(ax=ax, color="#888888", markersize=2, alpha=0.5, zorder=2)
+
+        if len(bk_valid) > 0:
+            bk_circles = bk_valid.copy()
+            bk_circles["geometry"] = bk_circles.apply(
+                lambda r: r.geometry.buffer(r["Kronendurchmesser"] / 2), axis=1
+            )
+            cd = bk_valid["Kronendurchmesser"]
+            vmin_cd = float(cd.quantile(0.05))
+            vmax_cd = float(cd.quantile(0.95))
+            norm_cd = mcolors.Normalize(vmin=vmin_cd, vmax=vmax_cd)
+            colors_cd = plt.cm.YlGn(norm_cd(cd.values))
+            bk_circles.plot(ax=ax, facecolor=colors_cd, edgecolor="none", alpha=0.7, zorder=3)
+            sm = plt.cm.ScalarMappable(cmap=plt.cm.YlGn, norm=norm_cd)
+            sm.set_array([])
+            plt.colorbar(sm, ax=ax, label="Crown diameter (m)", shrink=0.65)
+            ax.set_title(
+                f"BK registered trees  (n={len(bk_valid)} with crown, "
+                f"{len(bk_no_crown)} without)",
+                fontsize=10,
+            )
+    else:
+        ax.set_title("BK data not available", fontsize=10)
+
+    for tb in tile_boundaries:
+        tb.boundary.plot(ax=ax, color="white", linewidth=0.8, alpha=0.6, zorder=4)
+    ax.set_xlim(west_m, east_m); ax.set_ylim(south_m, north_m)
+    ax.set_xlabel("Easting (m)", fontsize=8); ax.set_ylabel("Northing (m)", fontsize=8)
+    ax.tick_params(labelsize=7)
+
+    # ── Right panel: pipeline tree polygons ───────────────────────────────────
+    ax = axes[1]
+    ax.imshow(full_img, extent=extent, origin="upper", aspect="equal")
+
+    if len(merged_gdf) > 0 and "height_m" in merged_gdf.columns:
+        h = merged_gdf["height_m"]
+        vmin_h = float(h.quantile(0.05))
+        vmax_h = float(h.quantile(0.95))
+        norm_h = mcolors.Normalize(vmin=vmin_h, vmax=max(vmax_h, vmin_h + 0.1))
+        colors_h = plt.cm.viridis(norm_h(h.values))
+        merged_gdf.plot(ax=ax, facecolor=colors_h, edgecolor="none", alpha=0.7, zorder=3)
+        sm2 = plt.cm.ScalarMappable(cmap=plt.cm.viridis, norm=norm_h)
+        sm2.set_array([])
+        plt.colorbar(sm2, ax=ax, label="Tree height (m)", shrink=0.65)
+
+    for tb in tile_boundaries:
+        tb.boundary.plot(ax=ax, color="white", linewidth=0.8, alpha=0.6, zorder=4)
+    ax.set_title(f"Pipeline segmented trees  (n={len(merged_gdf)})", fontsize=10)
+    ax.set_xlim(west_m, east_m); ax.set_ylim(south_m, north_m)
+    ax.set_xlabel("Easting (m)", fontsize=8); ax.set_ylabel("Northing (m)", fontsize=8)
+    ax.tick_params(labelsize=7)
+
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  location map  → {out_path.name}")
 
 
 def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: int | None = None, all_sizes: bool = False) -> None:
@@ -418,6 +621,7 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
                         print(f"  height validation (n={len(m)} BK-matched): "
                               f"bias={bias:+.1f} m  MAE={mae:.1f} m  RMSE={rmse:.1f} m")
                 _save_tile_summary(area_name, seg_dir, merged, bk_gdf, size)
+                _save_location_map(area_name, seg_dir, merged, bk_gdf, size)
 
 
 def cmd_compare(area_filter: str | None = None) -> None:

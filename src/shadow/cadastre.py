@@ -20,7 +20,7 @@ def tile_dominant_genus(bk_tile: gpd.GeoDataFrame) -> str | None:
     """Return the most frequent genus in a BK tile clip, or None if empty."""
     if len(bk_tile) == 0:
         return None
-    vc = bk_tile["Gattung lang"].str.split().str[0].value_counts()
+    vc = bk_tile["Gattung lang"].str.split(",").str[0].str.strip().value_counts()
     return vc.index[0] if len(vc) > 0 else None
 
 
