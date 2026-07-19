@@ -216,6 +216,7 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
 
         bias, mae, match_rate, mean_h = None, None, None, None
         rel_bias = mape = r2 = None
+        bias_global = mae_global = mape_global = r2_global = None
         if n_matched >= N_MIN:
             err = matched["allometric_height_m"] - matched["height_m"]
             bias = float(err.mean())
@@ -225,6 +226,13 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
             ss_res = float((err ** 2).sum())
             ss_tot = float(((matched["height_m"] - matched["height_m"].mean()) ** 2).sum())
             r2     = float(1 - ss_res / ss_tot) if ss_tot > 0 else None
+            if "h_global_m" in matched.columns:
+                err_g = matched["h_global_m"] - matched["height_m"]
+                ss_res_g = float((err_g ** 2).sum())
+                bias_global  = float(err_g.mean())
+                mae_global   = float(err_g.abs().mean())
+                mape_global  = float((err_g.abs() / matched["height_m"]).mean() * 100)
+                r2_global    = float(1 - ss_res_g / ss_tot) if ss_tot > 0 else None
         if n_pipe > 0:
             match_rate = n_matched / n_pipe * 100
             mean_h = float(pipe["height_m"].mean())
@@ -251,6 +259,8 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
             "genus": genus or "—",
             "bias": bias, "mae": mae,
             "rel_bias": rel_bias, "mape": mape, "r2": r2,
+            "bias_global": bias_global, "mae_global": mae_global,
+            "mape_global": mape_global, "r2_global": r2_global,
             "match_rate": match_rate,
             "ratio": ratio,
             "mean_h": mean_h,
@@ -407,6 +417,10 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
                 "rel_bias_pct":       round(r["rel_bias"], 1) if r["rel_bias"] is not None else None,
                 "mape_pct":           round(r["mape"],     1) if r["mape"]     is not None else None,
                 "r2":                 round(r["r2"],       3) if r["r2"]       is not None else None,
+                "bias_global_m":      round(r["bias_global"],  3) if r["bias_global"]  is not None else None,
+                "mae_global_m":       round(r["mae_global"],   3) if r["mae_global"]   is not None else None,
+                "mape_global_pct":    round(r["mape_global"],  1) if r["mape_global"]  is not None else None,
+                "r2_global":          round(r["r2_global"],    3) if r["r2_global"]    is not None else None,
                 "match_rate_pct":     round(r["match_rate"], 1) if r["match_rate"] is not None else None,
                 "n_matched":          r["n_matched"],
                 "n_segmented":        r["n_pipe"],

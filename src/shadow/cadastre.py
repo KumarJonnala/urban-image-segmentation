@@ -115,7 +115,7 @@ def enrich_from_baumkataster(
     if "crown_area_m2" in result.columns:
         for idx in result.index[matched]:
             sp = result.at[idx, "Gattung lang"]
-            genus = sp.split()[0] if pd.notna(sp) else None
+            genus = sp.split(",")[0].strip() if pd.notna(sp) else None
             A, B = ALLOMETRIC_PROFILES.get(genus, (ALLOMETRIC_A, ALLOMETRIC_B))
             area = result.at[idx, "crown_area_m2"]
             result.at[idx, "allometric_height_m"] = math.exp(
@@ -135,4 +135,10 @@ def enrich_from_baumkataster(
 
     result = result.drop(columns=["Baumhoehe", "Kronendurchmesser",
                                    "Gattung lang", "Stammumfang", "Pflanzjahr", "_dist"])
+
+    if "crown_area_m2" in result.columns:
+        result["h_global_m"] = result["crown_area_m2"].apply(
+            lambda a: math.exp(ALLOMETRIC_A + ALLOMETRIC_B * math.log(max(a, 1e-6)))
+        )
+
     return gpd.GeoDataFrame(result, geometry="geometry", crs=tree_gdf.crs)

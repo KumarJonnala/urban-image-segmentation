@@ -168,13 +168,13 @@ CROWN_RADIUS_BY_GENUS: dict[str, float] = {
 
 # Geographic areas to fetch (bounding boxes in WGS84 lat/lon)
 AREAS = {
-    # "ovgu_bbox": {
-    #     "west":  11.639779,
-    #     "east":  11.652739,
-    #     "south": 52.137663,
-    #     "north": 52.145538,
-    # },
-    
+    "ovgu_bbox": {
+        "west":  11.639779,
+        "east":  11.652739,
+        "south": 52.137663,
+        "north": 52.145538,
+    },
+
     "ovgu_bbox2": {
         "west":  11.630389,
         "east":  11.662135,
