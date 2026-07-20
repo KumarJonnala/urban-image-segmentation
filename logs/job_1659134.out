@@ -1,0 +1,552 @@
+Starting urban-shadow-analysis pipeline
+  Command   : all
+  Tile size : 250
+  Datetime  : 2026-06-21T12:00:00
+  Node      : ant1
+  Job ID    : 1659134
+  Time      : 2026-07-20 14:30 UTC
+Fetching ovgu_bbox_full.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/ovgu_bbox_full.png (3333.8 KB)
+
+--- ovgu_bbox: full-area image → ovgu_bbox_full.png (1.4s) ---
+
+--- ovgu_bbox @ 250m: 16 tile(s) ---
+Fetching ovgu_bbox_tile_0_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_0.png (3222.9 KB)
+Fetching ovgu_bbox_tile_0_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_1.png (3294.8 KB)
+Fetching ovgu_bbox_tile_0_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_2.png (3232.1 KB)
+Fetching ovgu_bbox_tile_0_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_0_3.png (2174.9 KB)
+Fetching ovgu_bbox_tile_1_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_0.png (3310.6 KB)
+Fetching ovgu_bbox_tile_1_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_1.png (3168.9 KB)
+Fetching ovgu_bbox_tile_1_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_2.png (2985.7 KB)
+Fetching ovgu_bbox_tile_1_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_1_3.png (2194.5 KB)
+Fetching ovgu_bbox_tile_2_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_0.png (3251.7 KB)
+Fetching ovgu_bbox_tile_2_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_1.png (3328.5 KB)
+Fetching ovgu_bbox_tile_2_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_2.png (3375.7 KB)
+Fetching ovgu_bbox_tile_2_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_2_3.png (2191.3 KB)
+Fetching ovgu_bbox_tile_3_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_0.png (1849.5 KB)
+Fetching ovgu_bbox_tile_3_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_1.png (1848.3 KB)
+Fetching ovgu_bbox_tile_3_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_2.png (1857.7 KB)
+Fetching ovgu_bbox_tile_3_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox/250m/ovgu_bbox_tile_3_3.png (1226.2 KB)
+  16 tile(s) saved — 14.3s total, 0.89s/tile
+Fetching ovgu_bbox2_full.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/ovgu_bbox2_full.png (3404.9 KB)
+
+--- ovgu_bbox2: full-area image → ovgu_bbox2_full.png (1.2s) ---
+
+--- ovgu_bbox2 @ 250m: 81 tile(s) ---
+Fetching ovgu_bbox2_tile_0_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_0.png (3281.3 KB)
+Fetching ovgu_bbox2_tile_0_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_1.png (3325.4 KB)
+Fetching ovgu_bbox2_tile_0_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_2.png (3334.9 KB)
+Fetching ovgu_bbox2_tile_0_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_3.png (3248.1 KB)
+Fetching ovgu_bbox2_tile_0_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_4.png (3398.6 KB)
+Fetching ovgu_bbox2_tile_0_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_5.png (3439.6 KB)
+Fetching ovgu_bbox2_tile_0_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_6.png (3492.5 KB)
+Fetching ovgu_bbox2_tile_0_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_7.png (3393.1 KB)
+Fetching ovgu_bbox2_tile_0_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_0_8.png (2865.5 KB)
+Fetching ovgu_bbox2_tile_1_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_0.png (3158.7 KB)
+Fetching ovgu_bbox2_tile_1_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_1.png (3276.8 KB)
+Fetching ovgu_bbox2_tile_1_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_2.png (3227.1 KB)
+Fetching ovgu_bbox2_tile_1_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_3.png (3165.3 KB)
+Fetching ovgu_bbox2_tile_1_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_4.png (3236.6 KB)
+Fetching ovgu_bbox2_tile_1_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_5.png (3373.2 KB)
+Fetching ovgu_bbox2_tile_1_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_6.png (3377.8 KB)
+Fetching ovgu_bbox2_tile_1_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_7.png (3371.5 KB)
+Fetching ovgu_bbox2_tile_1_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_1_8.png (3089.2 KB)
+Fetching ovgu_bbox2_tile_2_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_0.png (3282.1 KB)
+Fetching ovgu_bbox2_tile_2_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_1.png (3251.4 KB)
+Fetching ovgu_bbox2_tile_2_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_2.png (3301.1 KB)
+Fetching ovgu_bbox2_tile_2_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_3.png (3334.6 KB)
+Fetching ovgu_bbox2_tile_2_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_4.png (3260.8 KB)
+Fetching ovgu_bbox2_tile_2_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_5.png (3266.2 KB)
+Fetching ovgu_bbox2_tile_2_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_6.png (3224.1 KB)
+Fetching ovgu_bbox2_tile_2_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_7.png (3336.9 KB)
+Fetching ovgu_bbox2_tile_2_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_2_8.png (3123.7 KB)
+Fetching ovgu_bbox2_tile_3_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_0.png (3146.9 KB)
+Fetching ovgu_bbox2_tile_3_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_1.png (3109.0 KB)
+Fetching ovgu_bbox2_tile_3_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_2.png (3223.8 KB)
+Fetching ovgu_bbox2_tile_3_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_3.png (3270.4 KB)
+Fetching ovgu_bbox2_tile_3_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_4.png (3100.4 KB)
+Fetching ovgu_bbox2_tile_3_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_5.png (3167.5 KB)
+Fetching ovgu_bbox2_tile_3_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_6.png (3250.8 KB)
+Fetching ovgu_bbox2_tile_3_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_7.png (3259.1 KB)
+Fetching ovgu_bbox2_tile_3_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_3_8.png (3046.5 KB)
+Fetching ovgu_bbox2_tile_4_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_0.png (3085.4 KB)
+Fetching ovgu_bbox2_tile_4_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_1.png (3293.4 KB)
+Fetching ovgu_bbox2_tile_4_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_2.png (3220.6 KB)
+Fetching ovgu_bbox2_tile_4_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_3.png (3307.9 KB)
+Fetching ovgu_bbox2_tile_4_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_4.png (3206.9 KB)
+Fetching ovgu_bbox2_tile_4_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_5.png (3224.9 KB)
+Fetching ovgu_bbox2_tile_4_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_6.png (3198.5 KB)
+Fetching ovgu_bbox2_tile_4_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_7.png (3303.6 KB)
+Fetching ovgu_bbox2_tile_4_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_4_8.png (3106.5 KB)
+Fetching ovgu_bbox2_tile_5_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_0.png (2545.2 KB)
+Fetching ovgu_bbox2_tile_5_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_1.png (2763.7 KB)
+Fetching ovgu_bbox2_tile_5_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_2.png (3267.3 KB)
+Fetching ovgu_bbox2_tile_5_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_3.png (3334.7 KB)
+Fetching ovgu_bbox2_tile_5_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_4.png (3431.6 KB)
+Fetching ovgu_bbox2_tile_5_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_5.png (3348.2 KB)
+Fetching ovgu_bbox2_tile_5_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_6.png (3274.7 KB)
+Fetching ovgu_bbox2_tile_5_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_7.png (3266.6 KB)
+Fetching ovgu_bbox2_tile_5_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_5_8.png (3131.1 KB)
+Fetching ovgu_bbox2_tile_6_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_0.png (3307.3 KB)
+Fetching ovgu_bbox2_tile_6_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_1.png (3043.7 KB)
+Fetching ovgu_bbox2_tile_6_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_2.png (2691.7 KB)
+Fetching ovgu_bbox2_tile_6_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_3.png (3083.6 KB)
+Fetching ovgu_bbox2_tile_6_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_4.png (3442.4 KB)
+Fetching ovgu_bbox2_tile_6_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_5.png (3386.8 KB)
+Fetching ovgu_bbox2_tile_6_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_6.png (3247.4 KB)
+Fetching ovgu_bbox2_tile_6_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_7.png (3294.3 KB)
+Fetching ovgu_bbox2_tile_6_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_6_8.png (3146.4 KB)
+Fetching ovgu_bbox2_tile_7_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_0.png (3109.8 KB)
+Fetching ovgu_bbox2_tile_7_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_1.png (3250.7 KB)
+Fetching ovgu_bbox2_tile_7_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_2.png (3210.9 KB)
+Fetching ovgu_bbox2_tile_7_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_3.png (2492.6 KB)
+Fetching ovgu_bbox2_tile_7_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_4.png (2640.5 KB)
+Fetching ovgu_bbox2_tile_7_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_5.png (3193.5 KB)
+Fetching ovgu_bbox2_tile_7_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_6.png (3304.1 KB)
+Fetching ovgu_bbox2_tile_7_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_7.png (3182.4 KB)
+Fetching ovgu_bbox2_tile_7_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_7_8.png (3077.3 KB)
+Fetching ovgu_bbox2_tile_8_0.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_0.png (1581.4 KB)
+Fetching ovgu_bbox2_tile_8_1.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_1.png (1512.3 KB)
+Fetching ovgu_bbox2_tile_8_2.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_2.png (1578.8 KB)
+Fetching ovgu_bbox2_tile_8_3.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_3.png (1571.0 KB)
+Fetching ovgu_bbox2_tile_8_4.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_4.png (1505.3 KB)
+Fetching ovgu_bbox2_tile_8_5.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_5.png (1151.1 KB)
+Fetching ovgu_bbox2_tile_8_6.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_6.png (1640.4 KB)
+Fetching ovgu_bbox2_tile_8_7.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_7.png (1462.9 KB)
+Fetching ovgu_bbox2_tile_8_8.png ...
+  Saved /home/bumu60du/HiWi1/urban-shadow-analysis/data/orthophotos/ovgu_bbox2/250m/ovgu_bbox2_tile_8_8.png (1461.2 KB)
+  81 tile(s) saved — 78.4s total, 0.97s/tile
+  Loading TCD SegFormer (restor/tcd-segformer-mit-b5)...
+  Baumkataster: 85,302 trees loaded from Baeume_SFM_2026.gpkg
+  OSM: 261 buildings, 1078 roads
+
+--- ovgu_bbox @ 250m: segmenting 16 tile(s) [tcd_segformer] ---
+  ovgu_bbox_tile_0_0: 57 tree(s) [Platanus acerifolia], 25 BK-matched — 5.9s
+  ovgu_bbox_tile_0_1: 82 tree(s) [Tilia euchlora], 19 BK-matched — 2.4s
+  ovgu_bbox_tile_0_2: 65 tree(s) [Quercus robur], 27 BK-matched — 2.2s
+  ovgu_bbox_tile_0_3: 43 tree(s) [Populus simonii], 4 BK-matched — 1.6s
+  ovgu_bbox_tile_1_0: 82 tree(s) [Tilia cordata], 26 BK-matched — 2.4s
+  ovgu_bbox_tile_1_1: 93 tree(s) [Tilia euchlora], 33 BK-matched — 2.7s
+  ovgu_bbox_tile_1_2: 69 tree(s) [Tilia cordata], 52 BK-matched — 2.4s
+  ovgu_bbox_tile_1_3: 40 tree(s) [Quercus robur], 4 BK-matched — 1.6s
+  ovgu_bbox_tile_2_0: 105 tree(s) [Tilia cordata], 36 BK-matched — 2.7s
+  ovgu_bbox_tile_2_1: 70 tree(s) [Sorbus intermedia], 8 BK-matched — 2.2s
+  ovgu_bbox_tile_2_2: 55 tree(s) [Robinia pseudoacacia], 8 BK-matched — 2.0s
+  ovgu_bbox_tile_2_3: 65 tree(s), 0 BK-matched — 1.8s
+  ovgu_bbox_tile_3_0: 42 tree(s) [Acer platanoides], 24 BK-matched — 1.4s
+  ovgu_bbox_tile_3_1: 24 tree(s) [Sorbus thuringiaca 'Fastigiata'], 1 BK-matched — 1.1s
+  ovgu_bbox_tile_3_2: 23 tree(s) [Amelanchier lamarckii], 7 BK-matched — 1.1s
+  ovgu_bbox_tile_3_3: 27 tree(s), 0 BK-matched — 1.0s
+  Timing [250m]: 16 tile(s) in 34.5s — avg 2.2s/tile
+  merged → ovgu_bbox_tcd_segformer_trees_merged.fgb
+  height validation (n=274 BK-matched): bias=+5.0 m  MAE=6.2 m  RMSE=10.6 m
+  tile summary JSON → tile_summary_250m.json
+  tile summary → tile_summary_250m.png
+  tile summary (pct) → tile_summary_pct_250m.png
+  watershed comparison → watershed_comparison_250m.png
+
+      Tile    Pre   Post     Δ   Oversized   Mean area pre   Mean area post
+  ----------------------------------------------------------------------
+     (0,0)     57     93   +36           9           177.2            108.6
+     (0,1)     82    103   +21          11           168.3            133.9
+     (0,2)     65     97   +32          16           281.6            188.7
+     (0,3)     43     66   +23          14           166.5            108.5
+     (1,0)     82    126   +44           9           135.9             88.4
+     (1,1)     93    145   +52          11           178.3            114.3
+     (1,2)     69    144   +75          23           408.5            195.7
+     (1,3)     40     78   +38          10           253.1            129.8
+     (2,0)    105    127   +22          12            85.2             70.4
+     (2,1)     70     86   +16           9           123.8            100.8
+     (2,2)     55     81   +26          13           176.7            119.9
+     (2,3)     65     82   +17          12           126.3            100.1
+     (3,0)     42     48    +6           6            84.8             74.2
+     (3,1)     24     28    +4           4            93.2             79.9
+     (3,2)     23     24    +1           2            68.9             66.0
+     (3,3)     27     34    +7           4            82.3             65.3
+  ----------------------------------------------------------------------
+     TOTAL    942   1362  +420         165
+  location map  → location_map_250m.png
+  OSM: 1557 buildings, 4732 roads
+
+--- ovgu_bbox2 @ 250m: segmenting 81 tile(s) [tcd_segformer] ---
+  ovgu_bbox2_tile_0_0: 48 tree(s) [Tilia cordata], 8 BK-matched — 2.2s
+  ovgu_bbox2_tile_0_1: 52 tree(s) [Fraxinus excelsior], 17 BK-matched — 2.3s
+  ovgu_bbox2_tile_0_2: 39 tree(s), 0 BK-matched — 2.2s
+  ovgu_bbox2_tile_0_3: 44 tree(s) [Tilia euchlora], 9 BK-matched — 2.2s
+  ovgu_bbox2_tile_0_4: 74 tree(s) [Tilia euchlora], 9 BK-matched — 2.7s
+  ovgu_bbox2_tile_0_5: 58 tree(s) [Fraxinus spec.], 0 BK-matched — 2.3s
+  ovgu_bbox2_tile_0_6: 63 tree(s), 0 BK-matched — 2.4s
+  ovgu_bbox2_tile_0_7: 85 tree(s) [Acer platanoides 'Columnare'], 7 BK-matched — 2.7s
+  ovgu_bbox2_tile_0_8: 101 tree(s) [Acer campestre], 5 BK-matched — 3.0s
+  ovgu_bbox2_tile_1_0: 36 tree(s) [Platanus acerifolia], 22 BK-matched — 2.2s
+  ovgu_bbox2_tile_1_1: 63 tree(s) [Acer platanoides], 18 BK-matched — 2.4s
+  ovgu_bbox2_tile_1_2: 78 tree(s) [Tilia cordata], 23 BK-matched — 2.6s
+  ovgu_bbox2_tile_1_3: 63 tree(s) [Acer platanoides], 29 BK-matched — 2.5s
+  ovgu_bbox2_tile_1_4: 88 tree(s) [Tilia euchlora], 41 BK-matched — 2.8s
+  ovgu_bbox2_tile_1_5: 84 tree(s) [Magnolia kobus], 16 BK-matched — 2.8s
+  ovgu_bbox2_tile_1_6: 62 tree(s) [Magnolia kobus], 1 BK-matched — 2.4s
+  ovgu_bbox2_tile_1_7: 56 tree(s), 0 BK-matched — 2.3s
+  ovgu_bbox2_tile_1_8: 109 tree(s) [Robinia pseudoacacia], 7 BK-matched — 3.0s
+  ovgu_bbox2_tile_2_0: 29 tree(s) [Platanus acerifolia], 12 BK-matched — 2.0s
+  ovgu_bbox2_tile_2_1: 65 tree(s) [Platanus acerifolia], 17 BK-matched — 2.4s
+  ovgu_bbox2_tile_2_2: 39 tree(s) [Platanus acerifolia], 26 BK-matched — 2.2s
+  ovgu_bbox2_tile_2_3: 77 tree(s) [Platanus acerifolia], 35 BK-matched — 2.7s
+  ovgu_bbox2_tile_2_4: 84 tree(s) [Tilia cordata], 31 BK-matched — 2.7s
+  ovgu_bbox2_tile_2_5: 64 tree(s) [Magnolia kobus], 17 BK-matched — 2.4s
+  ovgu_bbox2_tile_2_6: 75 tree(s) [Tilia cordata], 22 BK-matched — 2.6s
+  ovgu_bbox2_tile_2_7: 62 tree(s) [Robinia pseudoacacia], 16 BK-matched — 2.5s
+  ovgu_bbox2_tile_2_8: 55 tree(s) [Robinia pseudoacacia 'Unifoliola'], 4 BK-matched — 2.2s
+  ovgu_bbox2_tile_3_0: 64 tree(s) [Acer platanoides], 20 BK-matched — 2.5s
+  ovgu_bbox2_tile_3_1: 63 tree(s) [Acer pseudoplatanus], 8 BK-matched — 2.5s
+  ovgu_bbox2_tile_3_2: 50 tree(s) [Tilia cordata], 8 BK-matched — 2.3s
+  ovgu_bbox2_tile_3_3: 81 tree(s) [Platanus acerifolia], 14 BK-matched — 2.8s
+  ovgu_bbox2_tile_3_4: 60 tree(s) [Tilia euchlora], 34 BK-matched — 2.5s
+  ovgu_bbox2_tile_3_5: 57 tree(s) [Tilia cordata], 23 BK-matched — 2.4s
+  ovgu_bbox2_tile_3_6: 76 tree(s) [Populus simonii], 11 BK-matched — 2.6s
+  ovgu_bbox2_tile_3_7: 57 tree(s) [Tilia cordata], 16 BK-matched — 2.4s
+  ovgu_bbox2_tile_3_8: 43 tree(s) [Tilia cordata], 1 BK-matched — 2.1s
+  ovgu_bbox2_tile_4_0: 73 tree(s) [Acer pseudoplatanus], 35 BK-matched — 2.7s
+  ovgu_bbox2_tile_4_1: 78 tree(s) [Liquidambar styraciflua], 20 BK-matched — 2.6s
+  ovgu_bbox2_tile_4_2: 88 tree(s) [Tilia cordata], 19 BK-matched — 2.8s
+  ovgu_bbox2_tile_4_3: 99 tree(s) [Tilia cordata], 30 BK-matched — 2.9s
+  ovgu_bbox2_tile_4_4: 57 tree(s) [Fraxinus excelsior], 22 BK-matched — 2.4s
+  ovgu_bbox2_tile_4_5: 61 tree(s) [Tilia cordata], 19 BK-matched — 2.6s
+  ovgu_bbox2_tile_4_6: 88 tree(s), 0 BK-matched — 2.7s
+  ovgu_bbox2_tile_4_7: 49 tree(s) [Tilia cordata], 8 BK-matched — 2.3s
+  ovgu_bbox2_tile_4_8: 54 tree(s) [Tilia cordata], 7 BK-matched — 2.2s
+  ovgu_bbox2_tile_5_0: 32 tree(s) [Tilia europaea 'Pallida'], 5 BK-matched — 2.1s
+  ovgu_bbox2_tile_5_1: 30 tree(s) [Tilia cordata], 15 BK-matched — 2.2s
+  ovgu_bbox2_tile_5_2: 75 tree(s) [Tilia cordata], 40 BK-matched — 2.6s
+  ovgu_bbox2_tile_5_3: 87 tree(s) [Acer platanoides], 28 BK-matched — 2.8s
+  ovgu_bbox2_tile_5_4: 77 tree(s) [Sorbus thuringiaca 'Fastigiata'], 21 BK-matched — 2.6s
+  ovgu_bbox2_tile_5_5: 53 tree(s), 0 BK-matched — 2.3s
+  ovgu_bbox2_tile_5_6: 77 tree(s) [Ginkgo biloba], 6 BK-matched — 2.8s
+  ovgu_bbox2_tile_5_7: 80 tree(s) [Tilia cordata], 11 BK-matched — 2.7s
+  ovgu_bbox2_tile_5_8: 59 tree(s) [Robinia pseudoacacia], 1 BK-matched — 2.3s
+  ovgu_bbox2_tile_6_0: 49 tree(s) [Acer pseudoplatanus], 5 BK-matched — 2.3s
+  ovgu_bbox2_tile_6_1: 64 tree(s) [Tilia europaea 'Pallida'], 8 BK-matched — 2.5s
+  ovgu_bbox2_tile_6_2: 28 tree(s) [Robinia pseudoacacia], 7 BK-matched — 2.0s
+  ovgu_bbox2_tile_6_3: 45 tree(s), 0 BK-matched — 2.4s
+  ovgu_bbox2_tile_6_4: 41 tree(s) [Acer platanoides], 15 BK-matched — 2.1s
+  ovgu_bbox2_tile_6_5: 86 tree(s) [Acer platanoides], 34 BK-matched — 2.7s
+  ovgu_bbox2_tile_6_6: 54 tree(s) [Acer negundo], 3 BK-matched — 2.3s
+  ovgu_bbox2_tile_6_7: 85 tree(s) [Prunus serrulata 'Kanzan'], 13 BK-matched — 2.7s
+  ovgu_bbox2_tile_6_8: 70 tree(s) [Tilia cordata], 21 BK-matched — 2.6s
+  ovgu_bbox2_tile_7_0: 37 tree(s) [Acer campestre], 14 BK-matched — 2.2s
+  ovgu_bbox2_tile_7_1: 65 tree(s) [Robinia pseudoacacia 'Bessoniana'], 16 BK-matched — 2.5s
+  ovgu_bbox2_tile_7_2: 87 tree(s) [Acer campestre], 54 BK-matched — 2.8s
+  ovgu_bbox2_tile_7_3: 16 tree(s) [Fraxinus excelsior], 3 BK-matched — 1.9s
+  ovgu_bbox2_tile_7_4: 37 tree(s) [Populus canadensis Hybride], 2 BK-matched — 2.2s
+  ovgu_bbox2_tile_7_5: 23 tree(s), 0 BK-matched — 1.8s
+  ovgu_bbox2_tile_7_6: 70 tree(s) [Acer platanoides], 30 BK-matched — 2.5s
+  ovgu_bbox2_tile_7_7: 51 tree(s) [Acer platanoides], 13 BK-matched — 2.2s
+  ovgu_bbox2_tile_7_8: 33 tree(s) [Acer platanoides], 11 BK-matched — 1.9s
+  ovgu_bbox2_tile_8_0: 30 tree(s) [Tilia cordata], 17 BK-matched — 1.5s
+  ovgu_bbox2_tile_8_1: 1 tree(s) [Prunus spec.], 1 BK-matched — 1.2s
+  ovgu_bbox2_tile_8_2: 3 tree(s) [Robinia pseudoacacia], 2 BK-matched — 1.1s
+  ovgu_bbox2_tile_8_3: 13 tree(s) [Robinia pseudoacacia], 4 BK-matched — 1.3s
+  ovgu_bbox2_tile_8_4: 18 tree(s) [Populus canadensis Hybride], 1 BK-matched — 1.3s
+  ovgu_bbox2_tile_8_5: 6 tree(s), 0 BK-matched — 1.1s
+  ovgu_bbox2_tile_8_6: 13 tree(s), 0 BK-matched — 1.4s
+  ovgu_bbox2_tile_8_7: 7 tree(s), 0 BK-matched — 1.1s
+  ovgu_bbox2_tile_8_8: 7 tree(s), 0 BK-matched — 1.1s
+  Timing [250m]: 81 tile(s) in 187.5s — avg 2.3s/tile
+  merged → ovgu_bbox2_tcd_segformer_trees_merged.fgb
+  height validation (n=1088 BK-matched): bias=+3.4 m  MAE=5.1 m  RMSE=9.1 m
+  tile summary JSON → tile_summary_250m.json
+  tile summary → tile_summary_250m.png
+  tile summary (pct) → tile_summary_pct_250m.png
+  watershed comparison → watershed_comparison_250m.png
+
+      Tile    Pre   Post     Δ   Oversized   Mean area pre   Mean area post
+  ----------------------------------------------------------------------
+     (0,0)     48     53    +5           5            72.4             65.6
+     (0,1)     52     60    +8           7            78.4             68.0
+     (0,2)     39     52   +13           4           106.8             80.1
+     (0,3)     44    105   +61          12           505.2            211.7
+     (0,4)     74     93   +19          11            99.4             79.1
+     (0,5)     58     59    +1           1            49.3             48.5
+     (0,6)     63     72    +9           3            59.8             52.3
+     (0,7)     85     99   +14           7            84.4             72.4
+     (0,8)    101    188   +87          21           240.4            129.2
+     (1,0)     36     49   +13           5           128.3             94.3
+     (1,1)     63    110   +47          16           215.5            123.4
+     (1,2)     78     94   +16           5           148.1            122.9
+     (1,3)     63    104   +41          12           316.9            191.9
+     (1,4)     88    132   +44          10           158.6            105.7
+     (1,5)     84     97   +13           6            58.7             50.9
+     (1,6)     62     71    +9           5            58.7             51.2
+     (1,7)     56     69   +13           4            81.6             66.2
+     (1,8)    109    127   +18          13            97.2             83.4
+     (2,0)     29     46   +17           9           243.8            153.6
+     (2,1)     65     88   +23          12           118.2             87.3
+     (2,2)     39     56   +17           4           108.4             75.5
+     (2,3)     77     96   +19          11           111.8             89.6
+     (2,4)     84    130   +46          15           151.4             97.8
+     (2,5)     64     90   +26           9           121.3             86.2
+     (2,6)     75    104   +29          14           127.7             92.1
+     (2,7)     62     75   +13           9            95.9             79.3
+     (2,8)     55     72   +17           6            90.4             69.1
+     (3,0)     64    104   +40          16           211.6            130.2
+     (3,1)     63    115   +52          21           246.1            134.8
+     (3,2)     50     95   +45          13           221.9            116.8
+     (3,3)     81    109   +28           7            84.5             62.8
+     (3,4)     60    123   +63          16           440.2            214.7
+     (3,5)     57    110   +53          17           403.8            209.2
+     (3,6)     76    109   +33          21           142.6             99.4
+     (3,7)     57     87   +30          13           226.4            148.3
+     (3,8)     43     82   +39           4           445.4            233.6
+     (4,0)     73     88   +15          11            97.3             80.7
+     (4,1)     78     97   +19          12           100.7             81.0
+     (4,2)     88    116   +28          12           145.5            110.3
+     (4,3)     99    109   +10           8            65.4             59.4
+     (4,4)     57    102   +45           8           347.3            194.1
+     (4,5)     61    123   +62          14           293.0            145.3
+     (4,6)     88    118   +30          14           129.0             96.2
+     (4,7)     49     67   +18           5           106.2             77.7
+     (4,8)     54     58    +4           3            63.4             59.1
+     (5,0)     32     49   +17           6           161.1            105.2
+     (5,1)     30     57   +27          11           287.3            151.2
+     (5,2)     75    119   +44           7           152.0             95.8
+     (5,3)     87    108   +21          11            82.0             66.0
+     (5,4)     77     87   +10           6            63.5             56.2
+     (5,5)     53     66   +13           9           107.5             86.4
+     (5,6)     77     99   +22          11           125.7             97.8
+     (5,7)     80     97   +17           8           128.6            106.1
+     (5,8)     59     63    +4           2            46.2             43.3
+     (6,0)     49     67   +18          11           180.5            132.0
+     (6,1)     64     80   +16          13           148.4            118.7
+     (6,2)     28     39   +11           8           338.5            243.1
+     (6,3)     45     82   +37           8           303.6            166.6
+     (6,4)     41     43    +2           4            75.5             72.0
+     (6,5)     86    115   +29           3            93.4             69.9
+     (6,6)     54     62    +8           5            85.3             74.3
+     (6,7)     85     93    +8           6            60.9             55.7
+     (6,8)     70     77    +7           6            73.1             66.5
+     (7,0)     37     47   +10           4           116.4             91.6
+     (7,1)     65     99   +34          14           185.0            121.5
+     (7,2)     87    135   +48           8           266.0            171.4
+     (7,3)     16     57   +41           3          1170.3            328.5
+     (7,4)     37     40    +3           6            90.8             84.0
+     (7,5)     23     32    +9           2            79.0             56.8
+     (7,6)     70     81   +11           1            25.5             22.0
+     (7,7)     51     63   +12           4            57.8             46.8
+     (7,8)     33     41    +8           1            48.5             39.0
+     (8,0)     30     37    +7           4           129.2            104.8
+     (8,1)      1      1    +0           0             4.3              4.3
+     (8,2)      3      8    +5           1          3348.7           1255.8
+     (8,3)     13     29   +16           4          1536.3            688.7
+     (8,4)     18     20    +2           4           172.7            155.5
+     (8,5)      6      6    +0           0            74.3             74.3
+     (8,6)     13     25   +12           2           210.1            109.2
+     (8,7)      7      8    +1           4           344.2            301.1
+     (8,8)      7      9    +2           2           116.9             90.9
+  ----------------------------------------------------------------------
+     TOTAL   4560   6344  +1784         650
+  location map  → location_map_250m.png
+Shadow casting for 2026-06-21 12:00 UTC
+
+--- ovgu_bbox @ 250m: 16 tile(s) ---
+  ovgu_bbox_tile_0_0: shadow=15.2% — 1.7s
+  ovgu_bbox_tile_0_1: shadow=9.0% — 1.8s
+  ovgu_bbox_tile_0_2: shadow=10.9% — 1.6s
+  ovgu_bbox_tile_0_3: shadow=7.7% — 1.4s
+  ovgu_bbox_tile_1_0: shadow=11.1% — 1.8s
+  ovgu_bbox_tile_1_1: shadow=13.1% — 1.9s
+  ovgu_bbox_tile_1_2: shadow=17.2% — 1.8s
+  ovgu_bbox_tile_1_3: shadow=8.4% — 1.5s
+  ovgu_bbox_tile_2_0: shadow=10.4% — 1.9s
+  ovgu_bbox_tile_2_1: shadow=7.1% — 1.6s
+  ovgu_bbox_tile_2_2: shadow=6.1% — 1.5s
+  ovgu_bbox_tile_2_3: shadow=7.8% — 1.5s
+  ovgu_bbox_tile_3_0: shadow=8.2% — 1.3s
+  ovgu_bbox_tile_3_1: shadow=6.6% — 1.2s
+  ovgu_bbox_tile_3_2: shadow=2.0% — 1.1s
+  ovgu_bbox_tile_3_3: shadow=7.9% — 1.2s
+  Timing [250m]: 16 tile(s) in 24.7s — avg 1.5s/tile
+  merged → ovgu_bbox_tcd_segformer_shadow_merged.fgb
+
+--- ovgu_bbox2 @ 250m: 81 tile(s) ---
+  ovgu_bbox2_tile_0_0: shadow=4.5% — 1.4s
+  ovgu_bbox2_tile_0_1: shadow=4.9% — 1.4s
+  ovgu_bbox2_tile_0_2: shadow=5.2% — 1.5s
+  ovgu_bbox2_tile_0_3: shadow=14.6% — 1.5s
+  ovgu_bbox2_tile_0_4: shadow=7.9% — 1.7s
+  ovgu_bbox2_tile_0_5: shadow=3.0% — 1.5s
+  ovgu_bbox2_tile_0_6: shadow=3.5% — 1.5s
+  ovgu_bbox2_tile_0_7: shadow=9.2% — 2.0s
+  ovgu_bbox2_tile_0_8: shadow=28.8% — 2.0s
+  ovgu_bbox2_tile_1_0: shadow=3.7% — 1.3s
+  ovgu_bbox2_tile_1_1: shadow=8.2% — 1.6s
+  ovgu_bbox2_tile_1_2: shadow=7.7% — 1.7s
+  ovgu_bbox2_tile_1_3: shadow=7.3% — 1.6s
+  ovgu_bbox2_tile_1_4: shadow=9.1% — 1.7s
+  ovgu_bbox2_tile_1_5: shadow=7.0% — 1.7s
+  ovgu_bbox2_tile_1_6: shadow=4.9% — 1.6s
+  ovgu_bbox2_tile_1_7: shadow=5.4% — 1.5s
+  ovgu_bbox2_tile_1_8: shadow=15.2% — 2.0s
+  ovgu_bbox2_tile_2_0: shadow=3.2% — 1.3s
+  ovgu_bbox2_tile_2_1: shadow=6.9% — 1.5s
+  ovgu_bbox2_tile_2_2: shadow=4.7% — 1.4s
+  ovgu_bbox2_tile_2_3: shadow=8.8% — 1.7s
+  ovgu_bbox2_tile_2_4: shadow=12.4% — 1.8s
+  ovgu_bbox2_tile_2_5: shadow=3.7% — 1.5s
+  ovgu_bbox2_tile_2_6: shadow=9.1% — 1.7s
+  ovgu_bbox2_tile_2_7: shadow=5.8% — 1.5s
+  ovgu_bbox2_tile_2_8: shadow=5.1% — 1.4s
+  ovgu_bbox2_tile_3_0: shadow=10.2% — 1.6s
+  ovgu_bbox2_tile_3_1: shadow=11.1% — 1.6s
+  ovgu_bbox2_tile_3_2: shadow=11.9% — 1.6s
+  ovgu_bbox2_tile_3_3: shadow=12.4% — 1.7s
+  ovgu_bbox2_tile_3_4: shadow=15.4% — 1.6s
+  ovgu_bbox2_tile_3_5: shadow=12.5% — 1.6s
+  ovgu_bbox2_tile_3_6: shadow=11.9% — 1.8s
+  ovgu_bbox2_tile_3_7: shadow=5.3% — 1.5s
+  ovgu_bbox2_tile_3_8: shadow=8.1% — 1.5s
+  ovgu_bbox2_tile_4_0: shadow=6.9% — 1.6s
+  ovgu_bbox2_tile_4_1: shadow=6.8% — 1.6s
+  ovgu_bbox2_tile_4_2: shadow=11.7% — 1.8s
+  ovgu_bbox2_tile_4_3: shadow=8.1% — 1.8s
+  ovgu_bbox2_tile_4_4: shadow=7.8% — 1.6s
+  ovgu_bbox2_tile_4_5: shadow=11.4% — 1.7s
+  ovgu_bbox2_tile_4_6: shadow=10.9% — 1.9s
+  ovgu_bbox2_tile_4_7: shadow=4.6% — 1.5s
+  ovgu_bbox2_tile_4_8: shadow=5.0% — 1.5s
+  ovgu_bbox2_tile_5_0: shadow=5.1% — 1.4s
+  ovgu_bbox2_tile_5_1: shadow=3.7% — 1.3s
+  ovgu_bbox2_tile_5_2: shadow=6.0% — 1.6s
+  ovgu_bbox2_tile_5_3: shadow=8.5% — 1.7s
+  ovgu_bbox2_tile_5_4: shadow=6.3% — 1.6s
+  ovgu_bbox2_tile_5_5: shadow=5.0% — 1.5s
+  ovgu_bbox2_tile_5_6: shadow=7.7% — 1.7s
+  ovgu_bbox2_tile_5_7: shadow=13.6% — 1.8s
+  ovgu_bbox2_tile_5_8: shadow=4.3% — 1.5s
+  ovgu_bbox2_tile_6_0: shadow=7.5% — 1.5s
+  ovgu_bbox2_tile_6_1: shadow=8.2% — 1.6s
+  ovgu_bbox2_tile_6_2: shadow=6.0% — 1.4s
+  ovgu_bbox2_tile_6_3: shadow=8.2% — 1.5s
+  ovgu_bbox2_tile_6_4: shadow=2.8% — 1.4s
+  ovgu_bbox2_tile_6_5: shadow=6.1% — 1.7s
+  ovgu_bbox2_tile_6_6: shadow=3.6% — 1.4s
+  ovgu_bbox2_tile_6_7: shadow=3.7% — 1.5s
+  ovgu_bbox2_tile_6_8: shadow=6.1% — 1.6s
+  ovgu_bbox2_tile_7_0: shadow=5.6% — 1.5s
+  ovgu_bbox2_tile_7_1: shadow=10.2% — 1.6s
+  ovgu_bbox2_tile_7_2: shadow=7.0% — 1.7s
+  ovgu_bbox2_tile_7_3: shadow=1.4% — 1.3s
+  ovgu_bbox2_tile_7_4: shadow=4.6% — 1.5s
+  ovgu_bbox2_tile_7_5: shadow=1.3% — 1.2s
+  ovgu_bbox2_tile_7_6: shadow=3.0% — 1.6s
+  ovgu_bbox2_tile_7_7: shadow=3.2% — 1.4s
+  ovgu_bbox2_tile_7_8: shadow=2.3% — 1.3s
+  ovgu_bbox2_tile_8_0: shadow=7.5% — 1.1s
+  ovgu_bbox2_tile_8_1: shadow=0.0% — 0.9s
+  ovgu_bbox2_tile_8_2: shadow=0.6% — 1.0s
+  ovgu_bbox2_tile_8_3: shadow=4.4% — 1.1s
+  ovgu_bbox2_tile_8_4: shadow=13.3% — 1.2s
+  ovgu_bbox2_tile_8_5: shadow=1.9% — 0.9s
+  ovgu_bbox2_tile_8_6: shadow=2.6% — 1.0s
+  ovgu_bbox2_tile_8_7: shadow=5.3% — 1.0s
+  ovgu_bbox2_tile_8_8: shadow=1.5% — 1.0s
+  Timing [250m]: 81 tile(s) in 122.3s — avg 1.5s/tile
+  merged → ovgu_bbox2_tcd_segformer_shadow_merged.fgb
+  ovgu_bbox → ovgu_bbox_species_grid.png
+  ovgu_bbox2 → ovgu_bbox2_species_grid.png
+Done: 2026-07-20 14:56 UTC
