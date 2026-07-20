@@ -185,7 +185,7 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
 
     _to_utm = _Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
 
-    out_path = _Path(seg_dir) / f"tile_summary_{tile_size_m}m.png"
+    out_path = _Path(seg_dir) / f"{area_name}_tile_summary_{tile_size_m}m.png"
     full_img_path = OUTPUT_DIR / area_name / f"{area_name}_full.png"
     if not full_img_path.exists():
         print(f"  [tile_summary] orthophoto not found, skipping: {full_img_path}")
@@ -387,7 +387,7 @@ def _save_tile_summary(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
 
     # Write tile summary JSON (before figure, so it saves even if matplotlib fails)
     import json as _json
-    json_path = _Path(seg_dir) / f"tile_summary_{tile_size_m}m.json"
+    json_path = _Path(seg_dir) / f"{area_name}_tile_summary_{tile_size_m}m.json"
     json_data = {
         "area_name": area_name,
         "tile_size_m": tile_size_m,
@@ -474,7 +474,7 @@ def _save_tile_summary_pct(area_name: str, seg_dir, records: list, tile_size_m: 
     import matplotlib.patches as mpatches
     import geopandas as gpd
 
-    out_path = _Path(seg_dir) / f"tile_summary_pct_{tile_size_m}m.png"
+    out_path = _Path(seg_dir) / f"{area_name}_tile_summary_pct_{tile_size_m}m.png"
     _to_utm  = _Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
 
     # Need orthophoto + extent (reuse same logic as _save_tile_summary)
@@ -631,7 +631,7 @@ def _save_watershed_comparison(
     from src.data_preprocessing import tiles_for_area
     from src.shadow.casting import vectorize_trees
 
-    out_path = _Path(seg_dir) / f"watershed_comparison_{tile_size_m}m.png"
+    out_path = _Path(seg_dir) / f"{area_name}_watershed_comparison_{tile_size_m}m.png"
     tiles = tiles_for_area(AREAS[area_name], tile_size_m)
 
     rows = []
@@ -656,13 +656,21 @@ def _save_watershed_comparison(
         n_oversized = int(
             (gdf_pre["crown_area_m2"] > np.pi * max_crown_radius_m ** 2).sum()
         )
+        total_area_pre  = float(gdf_pre["crown_area_m2"].sum())  if n_pre  else 0.0
+        total_area_post = float(gdf_post["crown_area_m2"].sum()) if n_post else 0.0
+        area_ratio  = total_area_post / total_area_pre if total_area_pre > 0 else float("nan")
+        count_ratio = n_post / n_pre if n_pre > 0 else float("nan")
         rows.append({
-            "tile":       f"({t['ix']},{t['iy']})",
-            "n_pre":      n_pre,
-            "n_post":     n_post,
-            "n_oversized": n_oversized,
-            "mean_pre":   float(gdf_pre["crown_area_m2"].mean()) if n_pre else 0.0,
-            "mean_post":  float(gdf_post["crown_area_m2"].mean()) if n_post else 0.0,
+            "tile":            f"({t['ix']},{t['iy']})",
+            "n_pre":           n_pre,
+            "n_post":          n_post,
+            "n_oversized":     n_oversized,
+            "mean_pre":        float(gdf_pre["crown_area_m2"].mean())  if n_pre  else 0.0,
+            "mean_post":       float(gdf_post["crown_area_m2"].mean()) if n_post else 0.0,
+            "total_area_pre":  total_area_pre,
+            "total_area_post": total_area_post,
+            "area_ratio":      area_ratio,
+            "count_ratio":     count_ratio,
         })
         all_pre.extend(gdf_pre["crown_area_m2"].tolist())
         all_post.extend(gdf_post["crown_area_m2"].tolist())
@@ -674,8 +682,12 @@ def _save_watershed_comparison(
     total_pre  = sum(r["n_pre"]  for r in rows)
     total_post = sum(r["n_post"] for r in rows)
     total_split = sum(r["n_oversized"] for r in rows)
+    total_area_pre_all  = sum(r["total_area_pre"]  for r in rows)
+    total_area_post_all = sum(r["total_area_post"] for r in rows)
+    overall_area_ratio  = (total_area_post_all / total_area_pre_all
+                           if total_area_pre_all > 0 else float("nan"))
 
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, axes = plt.subplots(1, 3, figsize=(24, 6))
 
     # --- Panel 1: crown area histogram (log scale) ---
     ax = axes[0]
@@ -718,11 +730,46 @@ def _save_watershed_comparison(
     ax2.set_title(f"Per-tile polygon count — pre vs post watershed")
     ax2.legend(fontsize=8)
 
+    # --- Panel 3: per-tile total crown area + area ratio ---
+    ax3 = axes[2]
+    b_pre3  = ax3.bar(x - w / 2, [r["total_area_pre"]  for r in rows], w,
+                      color="steelblue",  alpha=0.8, label="Pre")
+    b_post3 = ax3.bar(x + w / 2, [r["total_area_post"] for r in rows], w,
+                      color="darkorange", alpha=0.8, label="Post")
+    for rect_post, r in zip(b_post3, rows):
+        ratio = r["area_ratio"]
+        if not (ratio != ratio):  # skip nan
+            color = "seagreen" if ratio >= 0.95 else "crimson"
+            ax3.text(
+                rect_post.get_x() + rect_post.get_width() / 2,
+                rect_post.get_height() + max(total_area_pre_all / len(rows) * 0.01, 1),
+                f"×{ratio:.2f}",
+                ha="center", va="bottom", fontsize=8, color=color,
+            )
+    # Secondary axis: area ratio line
+    ax3r = ax3.twinx()
+    ratios = [r["area_ratio"] for r in rows]
+    ax3r.plot(x, ratios, color="black", linestyle="--", linewidth=1.2,
+              marker="o", markersize=4, label="Area ratio (right)")
+    ax3r.axhline(1.0, color="grey", linestyle=":", linewidth=0.8)
+    ax3r.set_ylabel("Area ratio (post/pre)", fontsize=8)
+    ax3r.tick_params(axis="y", labelsize=8)
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(tile_labels, rotation=45, ha="right", fontsize=8)
+    ax3.set_ylabel("Total crown area (m²)")
+    ax3.set_title(
+        f"Total crown area — pre vs post  [overall ratio: {overall_area_ratio:.3f}]"
+    )
+    lines3, labels3 = ax3.get_legend_handles_labels()
+    lines3r, labels3r = ax3r.get_legend_handles_labels()
+    ax3.legend(lines3 + lines3r, labels3 + labels3r, fontsize=8)
+
     plt.suptitle(
-        f"Watershed comparison — {area_name} @ {tile_size_m} m  "
-        f"[pre: {total_pre}, post: {total_post}, "
-        f"oversized blobs split: {total_split}]",
-        y=1.01,
+        f"Watershed comparison — {area_name} @ {tile_size_m} m\n"
+        f"pre: {total_pre} trees / {total_area_pre_all:.0f} m²   "
+        f"post: {total_post} trees / {total_area_post_all:.0f} m²   "
+        f"oversized blobs split: {total_split}   area ratio: {overall_area_ratio:.3f}",
+        y=1.02,
     )
     plt.tight_layout()
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
@@ -731,15 +778,186 @@ def _save_watershed_comparison(
 
     # Summary table
     print(f"\n  {'Tile':>8}  {'Pre':>5}  {'Post':>5}  {'Δ':>4}  "
-          f"{'Oversized':>10}  {'Mean area pre':>14}  {'Mean area post':>15}")
-    print(f"  {'-'*70}")
+          f"{'Oversized':>10}  {'Area pre (m²)':>14}  {'Area post (m²)':>15}  {'Ratio':>7}")
+    print(f"  {'-'*82}")
     for r in rows:
+        ratio_str = f"{r['area_ratio']:.3f}" if r['area_ratio'] == r['area_ratio'] else "  nan"
         print(f"  {r['tile']:>8}  {r['n_pre']:>5}  {r['n_post']:>5}  "
               f"{r['n_post']-r['n_pre']:>+4}  {r['n_oversized']:>10}  "
-              f"{r['mean_pre']:>14.1f}  {r['mean_post']:>15.1f}")
-    print(f"  {'-'*70}")
+              f"{r['total_area_pre']:>14.1f}  {r['total_area_post']:>15.1f}  {ratio_str:>7}")
+    print(f"  {'-'*82}")
+    overall_ratio_str = f"{overall_area_ratio:.3f}" if overall_area_ratio == overall_area_ratio else "  nan"
     print(f"  {'TOTAL':>8}  {total_pre:>5}  {total_post:>5}  "
-          f"{total_post-total_pre:>+4}  {total_split:>10}")
+          f"{total_post-total_pre:>+4}  {total_split:>10}  "
+          f"{total_area_pre_all:>14.1f}  {total_area_post_all:>15.1f}  {overall_ratio_str:>7}")
+
+
+def _save_height_comparison(
+    area_name: str,
+    seg_dir,
+    merged_gdf,
+    tile_size_m: int,
+) -> None:
+    """2-panel plot of normalised % deviation of per-species model from global (all trees).
+
+    Key quantity: diff_pct = (allometric_height_m − h_global_m) / h_global_m × 100  [%]
+      Panel 1 — Per-tile boxplots of diff_pct, one box per tile
+      Panel 2 — Overall histogram of diff_pct split by height_source
+    Saved as {area_name}_height_comparison_{tile_size_m}m.png in seg_dir.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from pathlib import Path as _Path
+    from pyproj import Transformer as _Transformer
+    from shapely.geometry import box as _box
+    from src.data_preprocessing import tiles_for_area
+
+    out_path = _Path(seg_dir) / f"{area_name}_height_comparison_{tile_size_m}m.png"
+
+    required = {"h_global_m", "allometric_height_m"}
+    if not required.issubset(merged_gdf.columns):
+        missing = required - set(merged_gdf.columns)
+        print(f"  [height_comparison] missing columns {missing}, skipping")
+        return
+
+    gdf = merged_gdf.dropna(subset=["h_global_m", "allometric_height_m"])
+    gdf = gdf[gdf["h_global_m"] > 0]  # avoid division by zero
+    if len(gdf) < 5:
+        print(f"  [height_comparison] too few rows ({len(gdf)}), skipping")
+        return
+
+    # Normalised % deviation for every tree
+    gdf = gdf.copy()
+    gdf["_diff_pct"] = (gdf["allometric_height_m"] - gdf["h_global_m"]) / gdf["h_global_m"] * 100
+
+    # Assign trees to tiles by centroid
+    _to_utm = _Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True)
+    tiles = tiles_for_area(AREAS[area_name], tile_size_m)
+
+    tile_labels, tile_data, tile_rows = [], [], []
+    for t in tiles:
+        west_m, south_m = _to_utm.transform(t["west"], t["south"])
+        east_m, north_m = _to_utm.transform(t["east"], t["north"])
+        tile_poly = _box(west_m, south_m, east_m, north_m)
+        sub = gdf[gdf.geometry.centroid.within(tile_poly)]
+        if len(sub) == 0:
+            continue
+        d = sub["_diff_pct"].values
+        label = f"({t['ix']},{t['iy']})"
+        tile_labels.append(label)
+        tile_data.append(d)
+        tile_rows.append({
+            "label": label, "n": len(d),
+            "mean": float(np.mean(d)), "std": float(np.std(d)),
+            "pct_gt5":  float(np.mean(np.abs(d) > 5.0)  * 100),
+            "pct_gt10": float(np.mean(np.abs(d) > 10.0) * 100),
+        })
+
+    all_pct = gdf["_diff_pct"].values
+    n_total  = len(all_pct)
+    mean_all = float(np.mean(all_pct))
+    std_all  = float(np.std(all_pct))
+    pct5     = float(np.mean(np.abs(all_pct) > 5.0)  * 100)
+    pct10    = float(np.mean(np.abs(all_pct) > 10.0) * 100)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # --- Panel 1: per-tile boxplots ---
+    ax1.boxplot(
+        tile_data, labels=tile_labels, patch_artist=True,
+        showfliers=False, whis=(5, 95),
+        medianprops=dict(color="black", linewidth=1.5),
+        boxprops=dict(facecolor="steelblue", alpha=0.6),
+    )
+    ax1.axhline(0, color="red", linestyle="--", linewidth=0.9, alpha=0.7)
+    # Only annotate tiles whose median deviation exceeds ±10% to avoid clutter
+    for i, d in enumerate(tile_data, start=1):
+        med = float(np.median(d))
+        if abs(med) >= 10.0:
+            ax1.text(i, med + (1.5 if med >= 0 else -2.5),
+                     f"{med:+.0f}%", ha="center", va="bottom", fontsize=7, color="navy")
+    ax1.set_xticklabels(tile_labels, rotation=45, ha="right", fontsize=8)
+    ax1.set_xlabel("Tile (ix, iy)", fontsize=9)
+    ax1.set_ylabel("Height deviation: (refined − global) / global × 100 (%)", fontsize=9)
+    ax1.set_title("Per-tile % deviation of per-species model from global", fontsize=10)
+    ax1.grid(axis="y", alpha=0.3)
+
+    # --- Panel 2: overall histogram split by height_source ---
+    has_source = "height_source" in gdf.columns
+    bins = np.linspace(np.percentile(all_pct, 1), np.percentile(all_pct, 99), 41)
+    if has_source:
+        meas_pct = gdf.loc[gdf["height_source"] == "measured", "_diff_pct"].values
+        allo_pct = gdf.loc[gdf["height_source"] != "measured", "_diff_pct"].values
+        ax2.hist(allo_pct, bins=bins, alpha=0.55, color="steelblue",
+                 label=f"Allometric source (n={len(allo_pct)})")
+        ax2.hist(meas_pct, bins=bins, alpha=0.55, color="darkorange",
+                 label=f"Measured source (n={len(meas_pct)})")
+    else:
+        ax2.hist(all_pct, bins=bins, alpha=0.7, color="steelblue",
+                 label=f"All trees (n={n_total})")
+
+    ax2.axvline(0,        color="red",   linestyle="--", linewidth=0.9, alpha=0.7, label="0%")
+    ax2.axvline(mean_all, color="black", linestyle="-",  linewidth=1.0,
+                label=f"Mean = {mean_all:+.1f}%")
+    ax2.set_xlabel("Height deviation: (refined − global) / global × 100 (%)", fontsize=9)
+    ax2.set_ylabel("Tree count", fontsize=9)
+    ax2.set_title("Overall % deviation distribution", fontsize=10)
+    ax2.legend(fontsize=8)
+    ax2.text(0.97, 0.96,
+             f"n={n_total}\nmean={mean_all:+.1f}%\nstd={std_all:.1f}%\n"
+             f"|dev|>5%:  {pct5:.1f}% of trees\n|dev|>10%: {pct10:.1f}% of trees",
+             transform=ax2.transAxes, ha="right", va="top", fontsize=8,
+             bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.7))
+    ax2.grid(axis="y", alpha=0.3)
+
+    plt.suptitle(
+        f"Height model % deviation (refined − global) / global — {area_name} @ {tile_size_m} m\n"
+        f"n={n_total} trees   mean={mean_all:+.1f}%   std={std_all:.1f}%   "
+        f"|dev|>10%: {pct10:.1f}% of trees",
+        y=1.02, fontsize=10,
+    )
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  height comparison → {out_path.name}")
+
+    # Console table
+    print(f"\n  {'Tile':<10}  {'n':>5}  {'mean (%)':>9}  {'std (%)':>8}  {'|>5%| (%)':>10}  {'|>10%| (%)':>11}")
+    print(f"  {'-'*62}")
+    for r in tile_rows:
+        print(f"  {r['label']:<10}  {r['n']:>5}  {r['mean']:>+9.1f}  {r['std']:>8.1f}"
+              f"  {r['pct_gt5']:>10.1f}  {r['pct_gt10']:>11.1f}")
+    print(f"  {'-'*62}")
+    print(f"  {'TOTAL':<10}  {n_total:>5}  {mean_all:>+9.1f}  {std_all:>8.1f}"
+          f"  {pct5:>10.1f}  {pct10:>11.1f}")
+
+    # JSON output
+    import json
+    json_path = _Path(seg_dir) / f"{area_name}_height_comparison_{tile_size_m}m.json"
+    payload = {
+        "area_name": area_name,
+        "tile_size_m": tile_size_m,
+        "overall": {
+            "n": n_total,
+            "mean_pct": round(mean_all, 3),
+            "std_pct": round(std_all, 3),
+            "pct_trees_gt5pct": round(pct5, 2),
+            "pct_trees_gt10pct": round(pct10, 2),
+        },
+        "tiles": [
+            {
+                "tile": r["label"],
+                "n": r["n"],
+                "mean_pct": round(r["mean"], 3),
+                "std_pct": round(r["std"], 3),
+                "pct_trees_gt5pct": round(r["pct_gt5"], 2),
+                "pct_trees_gt10pct": round(r["pct_gt10"], 2),
+            }
+            for r in tile_rows
+        ],
+    }
+    json_path.write_text(json.dumps(payload, indent=2))
+    print(f"  height comparison JSON → {json_path.name}")
 
 
 def _save_location_map(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m: int) -> None:
@@ -758,7 +976,7 @@ def _save_location_map(area_name: str, seg_dir, merged_gdf, bk_gdf, tile_size_m:
     from shapely.geometry import box as _box
     from src.data_preprocessing import tiles_for_area
 
-    out_path = _Path(seg_dir) / f"location_map_{tile_size_m}m.png"
+    out_path = _Path(seg_dir) / f"{area_name}_location_map_{tile_size_m}m.png"
     full_img_path = OUTPUT_DIR / area_name / f"{area_name}_full.png"
     if not full_img_path.exists():
         print(f"  [location_map] orthophoto not found, skipping: {full_img_path}")
@@ -955,6 +1173,7 @@ def cmd_segment(vegetation_model: str = DEFAULT_VEGETATION_MODEL, tile_size_m: i
                 records = _save_tile_summary(area_name, seg_dir, merged, bk_gdf, size)
                 _save_tile_summary_pct(area_name, seg_dir, records, size)
                 _save_watershed_comparison(area_name, seg_dir, size, vegetation_model)
+                _save_height_comparison(area_name, seg_dir, merged, size)
                 _save_location_map(area_name, seg_dir, merged, bk_gdf, size)
 
 
